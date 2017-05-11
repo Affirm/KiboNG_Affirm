@@ -1,0 +1,44 @@
+{
+  "exports": [
+    {
+      "id": "embedded.commerce.orders.createFromCart.after",
+      "virtualPath": "./dist/commerce.orders.manifest.all.js",
+      "actionId": "embedded.commerce.orders.createFromCart.after"
+    },
+    {
+      "id": "http.commerce.orders.setFulFillmentInfo.after",
+      "virtualPath": "./dist/commerce.orders.manifest.all.js",
+      "actionId": "http.commerce.orders.setFulFillmentInfo.after"
+    },
+    {
+      "id": "embedded.commerce.payments.action.performPaymentInteraction",
+      "virtualPath": "./dist/commerce.payments.manifest.all.js",
+      "actionId": "embedded.commerce.payments.action.performPaymentInteraction"
+    },
+    {
+      "id": "embedded.commerce.payments.action.before",
+      "virtualPath": "./dist/commerce.payments.manifest.all.js",
+      "actionId": "embedded.commerce.payments.action.before"
+    },
+    {
+      "id": "embedded.commerce.payments.action.after",
+      "virtualPath": "./dist/commerce.payments.manifest.all.js",
+      "actionId": "embedded.commerce.payments.action.after"
+    },
+    {
+      "id": "http.commerce.returns.createReturnItem.before",
+      "virtualPath": "./dist/commerce.return.manifest.all.js",
+      "actionId": "http.commerce.returns.createReturnItem.before"
+    },
+    {
+      "id": "embedded.platform.applications.install",
+      "virtualPath": "./dist/platform.applications.manifest.all.js",
+      "actionId": "embedded.platform.applications.install"
+    },
+    {
+      "id": "embedded.platform.applications.uninstall",
+      "virtualPath": "./dist/platform.applications.manifest.all.js",
+      "actionId": "embedded.platform.applications.uninstall"
+    }
+  ]
+}
