@@ -30,7 +30,7 @@ var paymentHelper = module.exports = {
     var config = {
     				"isSandbox" : (environment === "sandbox"),
     				"environment" : environment,
-						"publickapikey" : helper.getValue(paymentSettings, paymentConstants.PUBLIC_API_KEY), 
+						"publicapikey" : helper.getValue(paymentSettings, paymentConstants.PUBLIC_API_KEY), 
           	"username" : helper.getValue(paymentSettings, paymentConstants.USERNAME),
             "password" : helper.getValue(paymentSettings, paymentConstants.PASSWORD),
             "signature" : helper.getValue(paymentSettings, paymentConstants.SIGNATURE),

@@ -1,7 +1,7 @@
 module.exports = {
 	PAYMENTSETTINGID : "PayWithAffirm",
 	ENVIRONMENT: "environment",
-	PUBLIC_API_KEY: "publickapikey"
+	PUBLIC_API_KEY: "publicapikey"
 	USERNAME: "username",
 	PASSWORD: "password",
 	SIGNATURE: "signature",

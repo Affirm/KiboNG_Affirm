@@ -16,7 +16,7 @@ var getBaseParams = function(action, config) {
 	return {
 		merchantAccountId : config.merchantAccountId,
 		Action: action,
-		publickapikey: config.publickapikey,
+		publicapikey: config.publicapikey,
 		username: config.username,
 		password: config.password,
 		signature: config.signature,
