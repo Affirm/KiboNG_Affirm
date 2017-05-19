@@ -1,12 +1,12 @@
 module.exports = {
-  
-  'embedded.commerce.orders.createFromCart.after': {
-      actionName: 'embedded.commerce.orders.createFromCart.after',
-      customFunction: require('./domains/commerce.orders/embedded.commerce.orders.createFromCart.after')
+
+  'processOrderActionAfter': {
+      actionName: 'embedded.commerce.orders.action.after',
+      customFunction: require('./domains/commerce.orders/processOrderActionAfter')
   },
-  
-  'http.commerce.orders.setFulFillmentInfo.after': {
-      actionName: 'http.commerce.orders.setFulFillmentInfo.after',
-      customFunction: require('./domains/commerce.orders/http.commerce.orders.setFulFillmentInfo.after')
+
+  'affirmSetFulfillmentInfo': {
+      actionName: 'http.commerce.orders.setFulFillmentInfo.before',
+      customFunction: require('./domains/commerce.orders/setFulfillmentInfoBefore')
   }
 };

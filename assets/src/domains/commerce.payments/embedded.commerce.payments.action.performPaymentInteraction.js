@@ -1,73 +1,47 @@
 /**
  * Implementation for embedded.commerce.payments.action.performPaymentInteraction
+ * This function will receive the following context object:
 
- * This custom function will receive the following context object:
 {
-  "exec": {
-    "addPaymentInteraction": {
-      "parameters": [
+  &#34;exec&#34;: {
+    &#34;addPaymentInteraction&#34;: {
+      &#34;parameters&#34;: [
         {
-          "name": "paymentInteraction",
-          "type": "string"
+          &#34;name&#34;: &#34;paymentInteraction&#34;,
+          &#34;type&#34;: &#34;string&#34;
         }
       ],
-      "return": {
-        "type": "mozu.commerceRuntime.contracts.payments.paymentInteraction"
-      }
-    },
-    "setPaymentAmountRequested": {
-      "parameters": [
-        {
-          "name": "amount",
-          "type": "number"
-        }
-      ],
-      "return": {
-        "type": "mozu.commerceRuntime.contracts.payments.payment"
-      }
-    },
-    "setPaymentAmountCollected": {
-      "parameters": [
-        {
-          "name": "amount",
-          "type": "number"
-        }
-      ],
-      "return": {
-        "type": "mozu.commerceRuntime.contracts.payments.payment"
-      }
-    },
-    "setPaymentAmountCredited": {
-      "parameters": [
-        {
-          "name": "amount",
-          "type": "number"
-        }
-      ],
-      "return": {
-        "type": "mozu.commerceRuntime.contracts.payments.payment"
+      &#34;return&#34;: {
+        &#34;type&#34;: &#34;mozu.commerceRuntime.contracts.payments.paymentInteraction&#34;
       }
     }
   },
-  "get": {
-    "payment": {
-      "parameters": [],
-      "return": {
-        "type": "mozu.commerceRuntime.contracts.payments.payment"
+  &#34;get&#34;: {
+    &#34;payment&#34;: {
+      &#34;parameters&#34;: [],
+      &#34;return&#34;: {
+        &#34;type&#34;: &#34;mozu.commerceRuntime.contracts.payments.payment&#34;
       }
     },
-    "paymentAction": {
-      "parameters": [],
-      "return": {
-        "type": "mozu.commerceRuntime.contracts.payments.paymentAction"
+    &#34;paymentAction&#34;: {
+      &#34;parameters&#34;: [],
+      &#34;return&#34;: {
+        &#34;type&#34;: &#34;mozu.commerceRuntime.contracts.payments.paymentAction&#34;
       }
     }
   }
 }
 
-
  */
 
+var AffirmCheckout = require("../../affirm/checkout");
+
 module.exports = function(context, callback) {
-  callback();
+  try {
+    var affirmCheckout = new AffirmCheckout(context, callback);
+    affirmCheckout.processPayment();
+  } catch(e) {
+    callback(e);
+  }
+
 };

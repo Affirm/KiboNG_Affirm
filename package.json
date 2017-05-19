@@ -17,5 +17,14 @@
     "mozu-action-helpers": "^0.5.6",
     "mozu-action-simulator": "^1.6.3",
     "time-grunt": "^1.4.0"
+  },
+  "dependencies": {
+    "guid": "0.0.12",
+    "moment": "^2.10.3",
+    "mozu-node-sdk": "^1.18.15223-5",
+    "needle": "^0.10.0",
+    "underscore": "^1.8.3",
+    "xml2js": "^0.4.9",
+    "xmldoc": "^0.3.1"
   }
 }
