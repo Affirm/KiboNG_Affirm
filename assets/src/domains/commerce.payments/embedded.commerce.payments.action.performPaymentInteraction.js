@@ -37,11 +37,11 @@
 var AffirmCheckout = require("../../affirm/checkout");
 
 module.exports = function(context, callback) {
-  try {
-    var affirmCheckout = new AffirmCheckout(context, callback);
-    affirmCheckout.processPayment();
-  } catch(e) {
-    callback(e);
-  }
+    try {
+        var affirmCheckout = new AffirmCheckout(context, callback);
+        affirmCheckout.processPayment();
+    } catch(e) {
+        callback(e);
+    }
 
 };

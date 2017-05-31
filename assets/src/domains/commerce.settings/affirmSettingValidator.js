@@ -23,5 +23,5 @@
 var helper = require('../../affirm/paymenthelper');
 
 module.exports = function(context, callback) {
-  helper.validatePaymentSettings(context, callback);
+    helper.validatePaymentSettings(context, callback);
 };

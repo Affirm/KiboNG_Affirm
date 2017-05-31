@@ -12,13 +12,12 @@ var Guid = require('guid');
 
 
 var helper = module.exports = {
-	createClientFromContext: function (client, context, removeClaims) {
-		console.log('createClientFromContext');
-	  var c = client(context);
-	  if (removeClaims)
-		  c.context[constants.headers.USERCLAIMS] = null;
-	  return c;
-	},
+    createClientFromContext: function (client, context, removeClaims) {
+        var c = client(context);
+        if (removeClaims)
+            c.context[constants.headers.USERCLAIMS] = null;
+        return c;
+    },
 	validateUserSession : function(context) {
 		console.log('validateUserSession');
 		var user = context.items.pageContext.user;
@@ -51,17 +50,17 @@ var helper = module.exports = {
 		return appInfo.namespace+"~"+paymentConstants.PAYMENTSETTINGID;
 	},
 	isAffirmCheckout: function (context) {
-		console.log('isAffirmCheckout');
+		console.log('0. isAffirmCheckout');
 	  var params = this.parseUrlParams(context);
 	  var hasAffirmParams = _.has(params, 'access_token') && _.has(params, "isAffirmCheckout");
-	  console.log("is Affirm checkout?", hasAffirmParams);
+	  console.log("1. isAffirmCheckout?", hasAffirmParams);
 	  return hasAffirmParams;
 	},
 	parseUrlParams: function(context) {
-		console.log('parseUrlParams');
+		//console.log('parseUrlParams');
 		var request = context.request;
 		var urlParseResult = url.parse(request.url);
-		console.log("parsedUrl", urlParseResult);
+		//console.log("parsedUrl", urlParseResult);
 		queryStringParams = qs.parse(urlParseResult.query);
 		return queryStringParams;
 	},
@@ -92,14 +91,14 @@ var helper = module.exports = {
 	  return guid.value.replace(/\-/g, "");
 	},
 	getValue: function(paymentSetting, key) {
-		console.log('getValue', paymentSetting, key);
+		//console.log('getValue', paymentSetting, key);
 	  var value = _.findWhere(paymentSetting.credentials, {"apiName" : key}) || _.findWhere(paymentSetting.Credentials, {"APIName" : key});
 
 	    if (!value) {
 	      console.log(key+" not found");
 	      return;
 	    }
-	    console.log("return Key: "+key, value.value );
+	    //console.log("return Key: "+key, value.value );
 	    return value.value || value.Value;
 	},
 	addErrorToModel: function(context, callback, err) {

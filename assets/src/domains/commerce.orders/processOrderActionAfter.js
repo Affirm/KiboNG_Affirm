@@ -139,12 +139,12 @@
 
  var AffirmCheckout = require("../../affirm/checkout");
 
-
+var Order = require("mozu-node-sdk/clients/commerce/order");
 module.exports = function(context, callback) {
-  console.log("Order action", context);
   try{
     var affirmCheckout = new AffirmCheckout(context, callback);
-    affirmCheckout.closeOrder();
+    console.log("PROCESS Order action", context);
+    //affirmCheckout.closeOrder();
   } catch(e) {
     callback(e);
   }

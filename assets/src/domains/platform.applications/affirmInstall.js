@@ -5,7 +5,6 @@
  */
 
 var ActionInstaller = require('mozu-action-helpers/installers/actions');
-//var paymentSettingsClient = require("mozu-node-sdk/clients/commerce/settings/checkout/paymentSettings")();
 var tennatClient = require("mozu-node-sdk/clients/platform/tenant")();
 var constants = require('mozu-node-sdk/constants');
 var paymentConstants = require("../../affirm/constants");
@@ -18,109 +17,135 @@ function AppInstall(context, callback) {
 	self.cb = callback;
 
 	self.initialize = function() {
-		console.log(context);
-		console.log("Getting tenant", self.ctx.apiContext.tenantId);
 		var tenant = context.get.tenant();
 		enableAffirmPaymentWorkflow(tenant);
 	};
 
 	function enableAffirmPaymentWorkflow(tenant) {
 
-		try {
-			console.log("Installing affirm payment settings", tenant);
+        try {
+            var tasks = tenant.sites.map(function(site) {
+                return addUpdatePaymentSettings(context, site);
+            });
 
-			var tasks = tenant.sites.map(function(site) {
-											return addUpdatePaymentSettings(context, site);
-										});
-
-			Promise.all(tasks).then(function(result) {
-				console.log("Affirm payment definition installed");
-				enableActions();
-			}, function(error) {
-				self.cb(error);
-			});
-		} catch(e) {
-			self.cb(e);
-		}
+            Promise.all(tasks).then(function(result) {
+                    console.log("Affirm payment definition installed");
+                    addCustomRoutes(context, tenant);
+                }, function(error) {
+                    self.cb(error);
+            });
+        } catch(e) {
+            self.cb(e);
+        }
 	}
 
 
 	function addUpdatePaymentSettings(context, site) {
-		console.log("Adding payment settings for site", site.id);
-		var paymentSettingsClient = require("mozu-node-sdk/clients/commerce/settings/checkout/paymentSettings")();
-		paymentSettingsClient.context[constants.headers.SITE] = site.id;
-		//GetExisting
-		var paymentDef = getPaymentDef();
-		return paymentSettingsClient.getThirdPartyPaymentWorkflowWithValues({fullyQualifiedName :  paymentDef.namespace+"~"+paymentDef.name })
-		.then(function(paymentSettings){
-			return updateThirdPartyPaymentWorkflow(paymentSettingsClient, paymentSettings);
-		},function(err) {
-			return paymentSettingsClient.addThirdPartyPaymentWorkflow(paymentDef);
-		});
-	}
+        var paymentSettingsClient = require("mozu-node-sdk/clients/commerce/settings/checkout/paymentSettings")();
+        paymentSettingsClient.context[constants.headers.SITE] = site.id;
+        //GetExisting
+        var paymentDef = getPaymentDef();
+        return paymentSettingsClient.getThirdPartyPaymentWorkflowWithValues({fullyQualifiedName :  paymentDef.namespace+"~"+paymentDef.name })
+            .then(function(paymentSettings){
+                return updateThirdPartyPaymentWorkflow(paymentSettingsClient, paymentSettings);
+            },function(err) {
+                return paymentSettingsClient.addThirdPartyPaymentWorkflow(paymentDef);
+        });
+    }
 
 	function updateThirdPartyPaymentWorkflow(paymentSettingsClient, existingSettings) {
-		var paymentDef = getPaymentDef(existingSettings);
-		console.log(paymentDef);
-		paymentDef.isEnabled = existingSettings.isEnabled;
-		return paymentSettingsClient.deleteThirdPartyPaymentWorkflow({ "fullyQualifiedName" : paymentDef.namespace+"~"+paymentDef.name})
-		.then(function(result) {
-			return paymentSettingsClient.addThirdPartyPaymentWorkflow(paymentDef);
-		});
-	}
-
+        var paymentDef = getPaymentDef(existingSettings);
+        paymentDef.isEnabled = existingSettings.isEnabled;
+        return paymentSettingsClient.deleteThirdPartyPaymentWorkflow({ "fullyQualifiedName" : paymentDef.namespace+"~"+paymentDef.name})
+        .then(function(result) {
+            return paymentSettingsClient.addThirdPartyPaymentWorkflow(paymentDef);
+        });
+    }
 
 	function enableActions() {
-		console.log("installing code actions");
 		var installer = new ActionInstaller({ context: self.ctx.apiContext });
-	 	installer.enableActions(self.ctx, null, {
-      "embedded.commerce.payments.action.performPaymentInteraction" : function(settings) {
-        settings = settings || {};
-        settings.timeoutMilliseconds =settings.timeoutMilliseconds ||  30000;
-        return settings;
-      },
-      "affirmPaymentActionBefore" : function(settings) {
-        settings = settings || {};
-        settings.timeoutMilliseconds = settings.timeoutMilliseconds || 30000;
-        return settings;
-      },
-      "affirmCartBefore" : function(settings) {
-        settings = settings || {};
-        settings.timeoutMilliseconds =settings.timeoutMilliseconds ||  30000;
-        settings.configuration = {"allowWarmCheckout" : true};
-        return settings;
-      },
-      "affirmCheckoutBefore" : function(settings) {
-        settings = settings || {};
-        settings.timeoutMilliseconds = settings.timeoutMilliseconds || 30000;
-        return settings;
-      },
-      "affirmSetFulfillmentInfo" : function(settings) {
-        settings = settings || {};
-        settings.timeoutMilliseconds = settings.timeoutMilliseconds ||  30000;
-        settings.configuration = settings.configuration || {"missingLastNameValue" : "N/A"};
-        return settings;
-      }
-    } ).then(self.cb.bind(null, null), self.cb);
+		installer.enableActions(self.ctx, null, {
+            "embedded.commerce.payments.action.performPaymentInteraction" : function(settings) {
+              settings = settings || {};
+              settings.timeoutMilliseconds =settings.timeoutMilliseconds ||  30000;
+              return settings;
+            },"affirmProcessor" : function(settings) {
+				settings = settings || {};
+				settings.timeoutMilliseconds = settings.timeoutMilliseconds || 30000;
+				return settings;
+			}
+		} ).then(self.cb.bind(null, null), self.cb);
 	}
 
-	function getPaymentDef(existingSettings) {
-		return  {
-		    "name": paymentConstants.PAYMENTSETTINGID,
-		    "namespace": context.get.nameSpace(),
-		    "isEnabled": "false",
-		    "description" : "<div style='font-size:13px;font-style:italic'>Please review our <a style='color:blue;' target='mozupwahelp' href='https://docs.affirm.com/'>Help</a> documentation to configure Pay With Affirm</div>",
-		    "credentials":  [
-										getPaymentActionFieldDef("Environment", paymentConstants.ENVIRONMENT, "RadioButton", false,getEnvironmentVocabularyValues(), existingSettings),
-										getPaymentActionFieldDef("Public API key", paymentConstants.PUBLIC_API_KEY, "TextBox", true,null,existingSettings),
-										getPaymentActionFieldDef("User Name", paymentConstants.USERNAME, "TextBox", true,null,existingSettings),
-										getPaymentActionFieldDef("Password", paymentConstants.PASSWORD, "TextBox", true,null,existingSettings),
-										getPaymentActionFieldDef("Signature", paymentConstants.SIGNATURE, "TextBox", true,null,existingSettings),
-										getPaymentActionFieldDef("Merchant account ID", paymentConstants.MERCHANTACCOUNTID, "TextBox", false,null,existingSettings),
-										getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false,getOrderProcessingVocabularyValues(),existingSettings)
-			    ]
-			};
+	function addCustomRoutes(context, tenant) {
+		var tasks = tenant.sites.map(
+			function(site) {
+				var customRoutesApi = require("mozu-node-sdk/clients/commerce/settings/general/customRouteSettings")();
+				customRoutesApi.context[constants.headers.SITE] = site.id;
+				return customRoutesApi.getCustomRouteSettings().then(
+					function(customRoutes) {
+						return appUpdateCustomRoutes(customRoutesApi, customRoutes);
+					},
+					function(err) {
+						console.log("custom routes get error", err);
+						return appUpdateCustomRoutes(customRoutesApi, {routes: []});
+					}
+				);
+			}
+		);
+
+		Promise.all(tasks).then(function(result) {
+			console.log("Affirm custom route installed");
+			enableActions(context, tenant);
+		}, function(error) {
+			self.cb(error);
+		});
+
 	}
+
+	function appUpdateCustomRoutes(customRoutesApi, customRoutes) {
+		 console.log(customRoutes);
+			console.log("route array size", _.size(customRoutes.routes));
+			//Add / Update custom routes for paypal
+			customRoutes = getRoutes(customRoutes, "affirm/processor","affirmProcessor");
+			return customRoutesApi.updateCustomRouteSettings(customRoutes);
+
+	}
+
+	function getRoutes(customRoutes, template,action) {
+		 var route =  {
+			"template": template,
+			"internalRoute": "Arcjs",
+			"functionId": action,
+		 };
+
+		 var index = _.findIndex(customRoutes.routes, function(route) {return route.functionId == action; } );
+		 console.log("Action index "+action, index );
+			if (index <= -1)
+				customRoutes.routes[_.size(customRoutes.routes)] = route;
+			else
+				customRoutes.routes[index] = route;
+
+			return customRoutes;
+
+		}
+
+function getPaymentDef(existingSettings) {
+    //existingSettings = false; // TODO: review it
+    console.log('installing payment on: ', context.get.nameSpace());
+    return  {
+        "name": paymentConstants.PAYMENTSETTINGID,
+        "namespace": context.get.nameSpace(),
+        "isEnabled": "false",
+        "description" : "<div style='font-size:13px;font-style:italic'>Please review our <a style='color:blue;' target='mozupwahelp' href='https://docs.affirm.com/'>Help</a> documentation to configure Pay With Affirm</div>",
+        "credentials":  [
+                        getPaymentActionFieldDef("Environment", paymentConstants.ENVIRONMENT, "RadioButton", false,getEnvironmentVocabularyValues(), existingSettings),
+                        getPaymentActionFieldDef("Public API key", paymentConstants.PUBLIC_API_KEY, "TextBox", false,null,existingSettings),
+                        getPaymentActionFieldDef("API key Pair (Base 64)", paymentConstants.API_KEY_PAIR_BASE64, "TextBox", false,null,existingSettings),
+                        getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false,getOrderProcessingVocabularyValues(),existingSettings)
+            ]
+        };
+}
 
 	function getEnvironmentVocabularyValues() {
 		return [
@@ -135,6 +160,18 @@ function AppInstall(context, callback) {
 			getVocabularyContent(paymentConstants.CAPTUREONSHIPMENT, "en-US", "Authorize on Order Placement and Capture on Order Shipment")
 		];
 	}
+
+    function getPublicapikeyVocabularyValues() {
+        return [
+            getVocabularyContent(paymentConstants.PUBLIC_API_KEY, "en-US", "Public API KEY"),
+        ];
+    }
+
+    function getApikeypairVocabularyValues() {
+        return [
+            getVocabularyContent(paymentConstants.API_KEY_PAIR_BASE64, "en-US", "API key Pair (Base 64)"),
+        ];
+    }
 
 	function getVocabularyContent(key, localeCode, value) {
 		return {
@@ -160,10 +197,7 @@ function AppInstall(context, callback) {
 	          "vocabularyValues" : vocabularyValues
 		};
 	}
-
-
 }
-
 
 
 module.exports = function(context, callback) {

@@ -1,24 +1,9 @@
 {
   "exports": [
     {
-      "id": "processOrderActionAfter",
-      "virtualPath": "./dist\\commerce.orders.manifest.all.js",
-      "actionId": "embedded.commerce.orders.action.after"
-    },
-    {
-      "id": "affirmSetFulfillmentInfo",
-      "virtualPath": "./dist\\commerce.orders.manifest.all.js",
-      "actionId": "http.commerce.orders.setFulFillmentInfo.before"
-    },
-    {
       "id": "embedded.commerce.payments.action.performPaymentInteraction",
       "virtualPath": "./dist\\commerce.payments.manifest.all.js",
       "actionId": "embedded.commerce.payments.action.performPaymentInteraction"
-    },
-    {
-      "id": "affirmPaymentActionBefore",
-      "virtualPath": "./dist\\commerce.payments.manifest.all.js",
-      "actionId": "embedded.commerce.payments.action.before"
     },
     {
       "id": "affirmSettingValidator",
@@ -31,24 +16,9 @@
       "actionId": "embedded.platform.applications.install"
     },
     {
-      "id": "affirmCartBefore",
+      "id": "affirmProcessor",
       "virtualPath": "./dist\\storefront.manifest.all.js",
-      "actionId": "http.storefront.pages.cart.request.before"
-    },
-    {
-      "id": "affirmCartAfter",
-      "virtualPath": "./dist\\storefront.manifest.all.js",
-      "actionId": "http.storefront.pages.cart.request.after"
-    },
-    {
-      "id": "affirmCheckoutBefore",
-      "virtualPath": "./dist\\storefront.manifest.all.js",
-      "actionId": "http.storefront.pages.checkout.request.before"
-    },
-    {
-      "id": "affirmCheckoutAfter",
-      "virtualPath": "./dist\\storefront.manifest.all.js",
-      "actionId": "http.storefront.pages.checkout.request.after"
+      "actionId": "http.storefront.routes"
     }
   ]
 }

@@ -14,9 +14,9 @@ var AffirmCheckout = require("../../affirm/checkout");
 module.exports = function(context, callback) {
 
 	try {
-		//console.log(context.request.params);
+		console.log('addFulfillmentInfo', context.request.params);
 		var affirmCheckout = new AffirmCheckout(context, callback);
-	    affirmCheckout.addFulfillmentInfo();
+	    //affirmCheckout.addFulfillmentInfo();
     } catch(e) {
 	   callback(e);
 	}

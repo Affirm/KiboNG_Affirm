@@ -8,76 +8,69 @@ var affirmPay = require("./affirmpaysdk")();
 
 var paymentHelper = module.exports = {
 
+    // get Mozu configuration for external Affirm payment
 	getPaymentConfig: function(context) {
-		console.log('getPaymentConfig');
 		var self = this;
-		return helper.createClientFromContext(PaymentSettings, context, true)
-		.getThirdPartyPaymentWorkflowWithValues({fullyQualifiedName: helper.getPaymentFQN(context)})
-      	.then(function(paymentSettings) {
-      		return self.getConfig(context, paymentSettings);
+		return helper.createClientFromContext( PaymentSettings, context, true )
+		      .getThirdPartyPaymentWorkflowWithValues( { fullyQualifiedName: helper.getPaymentFQN(context)} )
+  	           .then(function(paymentSettings) {
+      		       return self.getConfig(context, paymentSettings);
     	});
 	},
 	getConfig: function(context, paymentSettings) {
-		console.log('getConfig');
 		var orderProcessing = helper.getValue(paymentSettings, paymentConstants.ORDERPROCESSING);
-    var captureOnAuthorize = (orderProcessing == paymentConstants.CAPTUREONSUBMIT);
-    var affirmConfig =  context.getSecureAppData('affirmConfig');
+        var captureOnAuthorize = (orderProcessing == paymentConstants.CAPTUREONSUBMIT);
+        var affirmConfig =  context.getSecureAppData('affirmConfig');
 
 		//TODO it's always null - revisit
 		//if (!affirmConfig) return {};
 
-    var environment = helper.getValue(paymentSettings, paymentConstants.ENVIRONMENT) ;
-    var config = {
-    				"isSandbox" : (environment === "sandbox"),
-    				"environment" : environment,
-						"publicapikey" : helper.getValue(paymentSettings, paymentConstants.PUBLIC_API_KEY), 
-          	"username" : helper.getValue(paymentSettings, paymentConstants.USERNAME),
-            "password" : helper.getValue(paymentSettings, paymentConstants.PASSWORD),
-            "signature" : helper.getValue(paymentSettings, paymentConstants.SIGNATURE),
-            "merchantAccountId" : helper.getValue(paymentSettings, paymentConstants.MERCHANTACCOUNTID),
-						"orderProcessing" : helper.getValue(paymentSettings, paymentConstants.ORDERPROCESSING),
-            "captureOnAuthorize": captureOnAuthorize,
-            "isEnabled": paymentSettings.isEnabled
-        };
+        var environment = helper.getValue(paymentSettings, paymentConstants.ENVIRONMENT) ;
+        var config = {
+                        "isSandbox" : (environment === "sandbox"),
+                        "environment" : environment,
+                        "publicapikey" : helper.getValue(paymentSettings, paymentConstants.PUBLIC_API_KEY),
+                        "apikeypair" : helper.getValue(paymentSettings, paymentConstants.API_KEY_PAIR_BASE64),
+                        "orderProcessing" : helper.getValue(paymentSettings, paymentConstants.ORDERPROCESSING),
+                        "captureOnAuthorize": captureOnAuthorize,
+                        "isEnabled": paymentSettings.isEnabled
+            };
 
     	return config;
 	},
-	validatePaymentSettings: function(context, callback) {
-		console.log('validatePaymentSettings');
-		var self = this;
-		var paymentSettings = context.request.body;
+    validatePaymentSettings: function(context, callback) {
+        var self = this;
+        var paymentSettings = context.request.body;
 
-		var pwaSettings = _.findWhere(paymentSettings.ExternalPaymentWorkflowDefinitions, {FullyQualifiedName : helper.getPaymentFQN(context)});
+        var pwaSettings = _.findWhere( paymentSettings.ExternalPaymentWorkflowDefinitions, { FullyQualifiedName : helper.getPaymentFQN( context ) } );
+        console.log('1. validatePaymentSettings', pwaSettings);
+        if (!pwaSettings || !pwaSettings.IsEnabled) callback();
 
-  		if (!pwaSettings || !pwaSettings.IsEnabled) callback();
+        var config = self.getConfig(context, pwaSettings);
+        if ( !config.publicapikey ) {
+            callback("Pay With Affirm - Public API TEST KEY not found.");
+            return;
+        }
 
-  		var config = self.getConfig(context, pwaSettings);
-			console.log('validatePaymentSettings, merchantAccountId', config.merchantAccountId);
-  		if ( !config.merchantAccountId ) {
-  			callback("Pay With Affirm - Affirm Merchant Account ID not found.");
-			return;
-  		}
-
-  		if (!config.username || !config.password || !config.environment)
-		{
-			callback("Pay With Affirm - Environment/Username/Password fields are required.");
-			return;
-		}
+        if ( !config.environment){
+            callback("Pay With Affirm - Environment fields are required.");
+            return;
+        }
 
 		//TODO: validate values
 		callback();
 	},
 	getInteractionByStatus: function (interactions, status) {
-		console.log('getInteractionByStatus');
-	  return _.find(interactions, function(interaction){
-	      return interaction.status == status;
+        console.log('getInteractionByStatus');
+        return _.find(interactions, function(interaction){
+            return interaction.status == status;
 	  } );
 	},
 	processPaymentResult: function(context,paymentResult, paymentAction, payment) {
-		console.log('processPaymentResult');
 	    var interactionType = "";
 	    var isManual = false;
 
+        console.log('processPaymentResult', paymentAction.manualGatewayInteraction);
 	    if (paymentAction.manualGatewayInteraction)
 	      isManual = true;
 
@@ -106,9 +99,11 @@ var paymentHelper = module.exports = {
 	              break;
 	          }
 
-	    if (paymentResult.status == paymentConstants.NEW)
-	      context.exec.setPaymentAmountRequested(paymentAction.amount);
-
+        console.log('ACTION STATUS', paymentResult.status, paymentResult.amount);
+	    if (paymentResult.status == paymentConstants.NEW){
+            console.log('ACTION', paymentAction.amount);
+	           context.exec.setPaymentAmountRequested(paymentAction.amount);
+        }
 	    var interaction  =  {status: paymentResult.status, interactionType: interactionType};
 	    if (paymentResult.amount)
 	      interaction.amount = paymentResult.amount;
@@ -140,13 +135,14 @@ var paymentHelper = module.exports = {
 	      context.exec.setPaymentAmountCollected(paymentResult.amount);
 	},
 	createNewPayment : function(context,config, paymentAction, payment) {
-		console.log('createNewPayment');
+		console.log('createNewPayment', paymentAction.amount);
 		var newStatus = { status : paymentConstants.NEW, amount: paymentAction.amount};
 		console.log(newStatus);
-		if (paymentAction.amount === 0)
+        return newStatus;
+		/*if (paymentAction.amount === 0)
 			return newStatus;
 
-		affirmPay.configure(config);
+		//affirmPay.configure(config);
 		console.log("config done");
 		try {
 			return helper.getOrderDetails(context,payment.orderId)
@@ -176,9 +172,22 @@ var paymentHelper = module.exports = {
 			console.error(e);
 			return { status : paymentConstants.FAILED, responseText: e};
 		}
+        */
 	},
 	authorizePayment: function(context, paymentAction, payment) {
 		console.log('authorizePayment');
+        //var config = this.getConfig(context, pwaSettings);
+        //console.log('authorizePayment', config);
+        return {
+              affirmTransactionId: '',
+              captureId: null,
+              responseCode: 200,
+              responseText:  'plaease capture the payment',//state,
+              status: paymentConstants.AUTHORIZED,
+              amount: payment.amountRequested,
+              captureOnAuthorize: true //config.captureOnAuthorize
+            };
+        /*
 		try {
 			var declineAuth = false;
 			if (context.configuration && context.configuration.payment)
@@ -223,26 +232,19 @@ var paymentHelper = module.exports = {
 			console.error("exception", e);
   			return {status : paymentConstants.DECLINED, responseText: e};
 		}
+        */
 	},
 	confirmAndAuthorize: function (context, config, paymentAction, payment) {
 		console.log('confirmAndAuthorize');
 		var  self = this;
 		try {
 			affirmPay.configure(config);
-	  		return this.createNewPayment(context, config, paymentAction, payment)
-	  		.then(function(result) {
-	      		if (result.status == paymentConstants.FAILED) {
-                      result.status = paymentConstants.DECLINED;
-                      return result;
-                  }
-	            return self.authorizePayment(context, paymentAction, payment);
-		    }, function(err) {
-		        console.log("Affirm confirm order failed", err);
-		        return {status : paymentConstants.DECLINED, responseCode: err.code, responseText: err.message};
-		    }).catch(function(err) {
-				console.log(err);
-				return { status : paymentConstants.DECLINED, responseText: err};
-			});
+	  		var newPayment = this.createNewPayment(context, config, paymentAction, payment);
+            if (newPayment.status == paymentConstants.FAILED) {
+                result.status = paymentConstants.DECLINED;
+                return result;
+            }
+            return this.authorizePayment(context, paymentAction, payment);
   		} catch(e) {
   			console.error(e);
   			return {status : paymentConstants.DECLINED, responseText: e};

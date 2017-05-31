@@ -1,84 +1,117 @@
-var crypto 	= require("crypto");
-var moment 	= require("moment");
 var _ 		= require("underscore");
 var needle 	= require('needle');
-var moment 	= require("moment");
+var helper = require("./helper");
 
-var mwsServiceUrls = { "eu" : "mws-eu.amazonservices.com", "na" : "mws.amazonservices.com", "jp" : "mws.amazonservices.jp"  };
-var profileEndpointUrls = { "uk" : "amazon.co.uk", "us" : "amazon.com", "de" : "amazon.de", "jp" : "amazon.co.jp" };
-var regionMappings = {"de" : "eu", "uk" : "eu", "us" : "na", "jp" : "jp"};
-var version = "2013-01-01";
+// TODO: shold we handle Payament Capture? Payment Void?
 
-var getBaseParams = function(action, config) {
-	console.log('getBaseParams', config);
-	if ( !config.merchantAccountId )
-		throw new Error("Affirm Merchant Account ID not found");
-	return {
-		merchantAccountId : config.merchantAccountId,
-		Action: action,
-		publicapikey: config.publicapikey,
-		username: config.username,
-		password: config.password,
-		signature: config.signature,
-		SignatureMethod: "HmacSHA256",
-		SignatureVersion: "2",
-		Version: version
-	};
-};
-
-var sortParams = function(params) {
-	var keys = _.keys(params).sort();
-
-	var sortObj = [];
-	_.each(keys, function(key) {
-	    sortObj[key] = params[key];
-	});
-	return sortObj;
-};
-
-var buildParamString = function(params, uriEncodeValues) {
-	var keys = _.keys(params).sort();
-	var paramStr = "";
-	_.each(keys, function(key) {
-		if (paramStr !== "")
-			paramStr += "&";
-	    paramStr += key+"=";
-	    if (uriEncodeValues)
-	    	paramStr += encodeURIComponent(params[key]);
-	    else
-	    	paramStr += params[key];
-	});
-	return paramStr;
-};
-
-
-
-var parseErrorToJson = function(error) {
-	console.log("AWS Error ",error);
-	return {
-		type: error.ErrorResponse.Error.Type,
-		code: error.ErrorResponse.Error.Code,
-		message: error.ErrorResponse.Error.Message
-	};
-
-};
-
+    var buildParamString = function(params, uriEncodeValues) {
+        var keys = _.keys(params).sort();
+        var paramStr = "";
+        _.each(keys, function(key) {
+            if (paramStr !== "")
+                paramStr += "&";
+            paramStr += key+"=";
+            if (uriEncodeValues)
+                paramStr += encodeURIComponent(params[key]);
+            else
+                paramStr += params[key];
+        });
+        return paramStr;
+    };
 
 module.exports = function() {
-	var self = this;
+    var self = this;
 
-	self.configure = function(config) {
-		self.config = config;
+    // Parse response params to get the token sent by Affirm
+    self.getToken = function( context ) {
+        var params = [];
+        if( context.request && context.request.url ){
+            params = helper.parseUrlParams( context );
+        }
+        return params;
+    };
+
+    self.closeOrder = function( mzOrder, affirmToken ) {
+        console.log('Affirm Need closeOrder?');
+    };
+
+    // call affirm charges to capture the payment
+    self.capturePayment = function( params, config ) {
+        var options = {
+                json: true,
+                headers: { 'Authorization':'Basic ' + config.apikeypair }
+        };
+
+        var promise = new Promise( function(resolve, reject) {
+			needle.post( 'https://sandbox.affirm.com/api/v2/charges',
+                params, options,
+				function(err, response, body){
+					if (response.statusCode != 200)
+						reject(response.body);
+					else {
+						resolve(body);
+					}
+				}
+			);
+		});
+		return promise;
+	};
+
+    self.executeRequest = function( action, params ) {
+        console.log('executeRequest');
+
+        return true;
+
+
+        /*
+        params = sortParams(params);
+        //sign the request
+        var stringToSign = "POST";
+        stringToSign += "\n";
+        stringToSign += self.config.server;
+        stringToSign += "\n";
+        stringToSign += self.config.path;
+        stringToSign += "\n";
+        stringToSign += buildParamString(params, true);
+        console.log("AWS Params to Sign", stringToSign);
+        var signature = crypto.createHmac("sha256", self.config.mwsSecret).update(stringToSign).digest("base64");
+        console.log("Aws Signature",signature);
+        params.Signature = encodeURIComponent(signature);
+
+
+        var promise = new Promise(function(resolve, reject) {
+            needle.post( "https://"+self.config.server+self.config.path,
+            buildParamString(params, false),
+            {json: false, parse: true, open_timeout: 60000},
+            function(err, response, body) {
+                if (response.statusCode != 200)
+                    reject(parseErrorToJson(response.body));
+                else {
+                    resolve(body);
+                }
+            });
+        });
+        return promise;
+        */
+    };
+
+
+    self.configure = function(config) {
+		console.log('Affirm Need Config?');
+        /*
+        self.config = config;
 		self.config.profileEnvt = config.isSandbox ? "api.sandbox" : "api";
 		path = config.isSandbox ? '/OffAmazonPayments_Sandbox' : '/OffAmazonPayments';
 		self.config.path = path + "/" + version;
 		self.config.server = mwsServiceUrls[regionMappings[config.region]];
 		self.captureOnAuthorize = config.captureOnAuthorize;
+        */
 	};
 
 	self.executeRequest = function(action, params) {
+		console.log('executeRequest');
 		//add timestamp
-		var utcTime = moment.utc();
+		/*var utcTime = moment.utc();
 
 		params = _.extendOwn(params, getBaseParams(action, self.config));
 		params.Timestamp = utcTime.format('YYYY-MM-DDTHH:mm:ss')+"Z";
@@ -111,10 +144,12 @@ module.exports = function() {
 			});
 		});
 		return promise;
+        */
 	};
 
-
+/*
 	self.validateToken = function(access_token) {
+		console.log('validateToken', access_token);
 		var promise = new Promise(function(resolve, reject){
 			self.getProfile(access_token).then(function(data) {
 					resolve(true);
@@ -165,14 +200,14 @@ module.exports = function() {
 		console.log("Setting AWS order orderDetails", params);
 		return executeRequest("SetOrderReferenceDetails", params);
 	};
-
+*/
 	self.confirmOrder = function(orderReferenceId) {
 		var params = {};
-		params.AmazonOrderReferenceId = orderReferenceId;
-		console.log("Confirming AWS Order", params);
+		params.AffirmOrderReferenceId = orderReferenceId;
+		console.log("Confirming Affirm Order", params);
 		return executeRequest("ConfirmOrderReference", params);
 	};
-
+/*
 	self.requestAuthorzation = function(orderReferenceId, amount, currencyCode, authorizationReferenceId,captureOnAuthorize, declineAuth) {
 		var params = {};
 		params.AmazonOrderReferenceId = orderReferenceId;
@@ -236,5 +271,6 @@ module.exports = function() {
 		console.log("AWS refund params", params);
 		return executeRequest("Refund", params);
 	};
+    */
 	return self;
 };

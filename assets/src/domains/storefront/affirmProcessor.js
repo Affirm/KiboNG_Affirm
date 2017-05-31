@@ -1,5 +1,5 @@
 /**
- * Implementation for http.storefront.pages.checkout.request.after
+ * Implementation for http.storefront.routes
 
 
  * HTTP Actions all receive a similar context object that includes
@@ -23,15 +23,12 @@
 
 var AffirmCheckout = require("../../affirm/checkout");
 
-var helper = require('../../affirm/helper');
-
 module.exports = function(context, callback) {
-  console.log('CHECKOUT AFTER', context.cache.request.get("affirmError"));
-  /*var affirmError = context.cache.request.get("affirmError");
-  if (affirmError) helper.setError(context,callback, affirmError);
-  else {
-    var affirmCheckout = new AffirmCheckout(context, callback);
-    affirmCheckout.addViewData();
-  }
-  */
+    try{
+        var affirmCheckout = new AffirmCheckout(context, callback);
+        affirmCheckout.closeOrder();
+    } catch(e) {
+      callback(e);
+    }
+
 };

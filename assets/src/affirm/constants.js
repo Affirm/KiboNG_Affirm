@@ -1,11 +1,8 @@
 module.exports = {
 	PAYMENTSETTINGID : "PayWithAffirm",
 	ENVIRONMENT: "environment",
-	PUBLIC_API_KEY: "publicapikey"
-	USERNAME: "username",
-	PASSWORD: "password",
-	SIGNATURE: "signature",
-	MERCHANTACCOUNTID: "merchantAccountId",
+	PUBLIC_API_KEY: "publicapikey",
+    API_KEY_PAIR_BASE64: "apikeypair",
 	CAPTUREONSUBMIT: "AuthAndCaptureOnOrderPlacement",
 	CAPTUREONSHIPMENT: "AuthOnOrderPlacementAndCaptureOnOrderShipment",
 	ORDERPROCESSING: "orderProcessing",
@@ -16,29 +13,4 @@ module.exports = {
 	CAPTURED: "Captured",
 	CREDITED: "Credited",
 	CREDITPENDING: "CreditPending",
-
-/*	SELLERID: "sellerId",
-	CLIENTID: "clientId",
-	AUTHTOKEN: "authToken",
-	APPID: "appId",
-	AWSACCESSKEYID: "awsAccessKeyId",
-	AWSSECRET: "awsSecret",
-	REGION: "region",
-	ORDERPROCESSING: "orderProcessing",
-	ACCESSTOKEN: "access_token",
-	BUTTONCOLOR: "buttonColor",
-	BUTTONTYPE: "buttonType",
-	POPUP: "usepopup",
-	CAPTUREONSUBMIT: "AuthAndCaptureOnOrderPlacement",
-	CAPTUREONSHIPMENT: "AuthOnOrderPlacementAndCaptureOnOrderShipment",
-	FAILED: "Failed",
-	NEW: "New",
-	DECLINED: "Declined",
-	AUTHORIZED: "Authorized",
-	CAPTURED: "Captured",
-	CREDITED: "Credited",
-	CREDITPENDING: "CreditPending",
-	VOIDED: "Voided",
-  BILLINGADDRESS: "billingAddressOption"
-*/
 };
