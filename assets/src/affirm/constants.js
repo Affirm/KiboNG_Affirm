@@ -6,6 +6,8 @@ module.exports = {
 	CAPTUREONSUBMIT: "AuthAndCaptureOnOrderPlacement",
 	CAPTUREONSHIPMENT: "AuthOnOrderPlacementAndCaptureOnOrderShipment",
 	ORDERPROCESSING: "orderProcessing",
+    THRESHOLD: "threshold",
+    SCRIPT_URL: "scriptUrl",
 	FAILED: "Failed",
 	NEW: "New",
 	DECLINED: "Declined",

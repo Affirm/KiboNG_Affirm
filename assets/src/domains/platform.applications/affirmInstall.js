@@ -142,6 +142,8 @@ function getPaymentDef(existingSettings) {
                         getPaymentActionFieldDef("Environment", paymentConstants.ENVIRONMENT, "RadioButton", false,getEnvironmentVocabularyValues(), existingSettings),
                         getPaymentActionFieldDef("Public API key", paymentConstants.PUBLIC_API_KEY, "TextBox", false,null,existingSettings),
                         getPaymentActionFieldDef("API key Pair (Base 64)", paymentConstants.API_KEY_PAIR_BASE64, "TextBox", false,null,existingSettings),
+                        getPaymentActionFieldDef("Affirm Amount Threshold", paymentConstants.THRESHOLD, "TextBox", false,null,existingSettings),
+                        getPaymentActionFieldDef("JS Script URL", paymentConstants.SCRIPT_URL, "TextBox", false,null,existingSettings),
                         getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false,getOrderProcessingVocabularyValues(),existingSettings)
             ]
         };
@@ -170,6 +172,18 @@ function getPaymentDef(existingSettings) {
     function getApikeypairVocabularyValues() {
         return [
             getVocabularyContent(paymentConstants.API_KEY_PAIR_BASE64, "en-US", "API key Pair (Base 64)"),
+        ];
+    }
+
+    function getThresholdVocabularyValues() {
+        return [
+            getVocabularyContent(paymentConstants.THRESHOLD, "en-US", "Affirm Amount Threshold"),
+        ];
+    }
+
+    function getScriptUrlVocabularyValues() {
+        return [
+            getVocabularyContent(paymentConstants.SCRIPT_URL, "en-US", "JS Script URL"),
         ];
     }
 

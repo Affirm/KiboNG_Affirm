@@ -50,10 +50,8 @@ var helper = module.exports = {
 		return appInfo.namespace+"~"+paymentConstants.PAYMENTSETTINGID;
 	},
 	isAffirmCheckout: function (context) {
-		console.log('0. isAffirmCheckout');
 	  var params = this.parseUrlParams(context);
 	  var hasAffirmParams = _.has(params, 'access_token') && _.has(params, "isAffirmCheckout");
-	  console.log("1. isAffirmCheckout?", hasAffirmParams);
 	  return hasAffirmParams;
 	},
 	parseUrlParams: function(context) {

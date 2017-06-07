@@ -28,34 +28,6 @@ module.exports = function(context, callback) {
         }
     };
 
-/*
-    self.validateAffirmOrder = function(awsReferenceId) {
-        return getAffirmOrderDetails(self.ctx,awsReferenceId, null).then(function(data) {
-            var orderDetails = data.awsOrder;
-            console.log("Order status", orderDetails.OrderReferenceStatus);
-            var state = orderDetails.OrderReferenceStatus.State;
-            if (state === "Canceled" ) {
-                console.log("Order status", "Affirm order "+awsReferenceId+" went into stale state");
-                self.cb("Affirm order has timed out. Relogin from cart or checkout page");
-            }
-
-            //check constraints
-            if (orderDetails.Constraints) {
-                var paymentNotSet = _.find(orderDetails.Constraint, function(c) {
-                                            return c.ConstraintID === "PaymentPlanNotSet";
-                                        });
-                if (paymentNotSet) {
-                    console.log("Affirm payment not set", "Amazon order "+awsReferenceId+" payment not set");
-                    self.cb("A valid payment has not been selected from Affirm. Please fix the issue before placing the order");
-                }
-            }
-        }).catch(function(err) {
-            console.error("Error validating aws order", err);
-            self.cb(err);
-        });
-    };
-*/
-
     // Process Affirm payment interactions
     self.processPayment = function() {
         var paymentAction = self.ctx.get.paymentAction();
@@ -196,38 +168,6 @@ module.exports = function(context, callback) {
         return self.ctx.response.end();
     }
   };
-
-
-
-/*
-  //Close the order in amazon once the order has been marked as completed in mozu
-  self.closeOrder = function() {
-    var mzOrder = self.ctx.get.order();
-    if (mzOrder.status != "Completed") return self.cb();
-      console.log("Order", mzOrder);
-    //validate it is amazon payment
-    var payment = _.find(mzOrder.payments, function(payment){
-                      return payment.paymentType == paymentConstants.PAYMENTSETTINGID && payment.status=="Collected";
-                  } );
-    console.log("Affirm payment payment", payment);
-
-    if (!payment) return self.cb();
-    paymentHelper.getPaymentConfig(self.ctx).then(function(config) {
-        affirmPay.configure(config);
-        return affirmPay.getOrderDetails(payment.externalTransactionId);
-    }).then(function(awsOrder) {
-       var state = awsOrder.GetOrderReferenceDetailsResponse.GetOrderReferenceDetailsResult.OrderReferenceDetails.OrderReferenceStatus.State;
-       console.log("Aws Order status", state);
-       if (state != "Open") return;
-
-        return affirmPay.closeOrder(payment.externalTransactionId).then(function(closeResult){
-          console.log("Close AWS Oder result",closeResult);
-        }, function(err) {
-          console.log("Close Aws order error", err);
-        });
-    }).then(self.cb, self.cb);
-  };
-*/
 
 
   self.setError = function(context, callback, error) {

@@ -285,6 +285,8 @@ module.exports = {
 	CAPTUREONSUBMIT: "AuthAndCaptureOnOrderPlacement",
 	CAPTUREONSHIPMENT: "AuthOnOrderPlacementAndCaptureOnOrderShipment",
 	ORDERPROCESSING: "orderProcessing",
+    THRESHOLD: "threshold",
+    SCRIPT_URL: "scriptUrl",
 	FAILED: "Failed",
 	NEW: "New",
 	DECLINED: "Declined",
@@ -460,6 +462,8 @@ var paymentHelper = module.exports = {
                         "environment" : environment,
                         "publicapikey" : helper.getValue(paymentSettings, paymentConstants.PUBLIC_API_KEY),
                         "apikeypair" : helper.getValue(paymentSettings, paymentConstants.API_KEY_PAIR_BASE64),
+                        "threshold" : helper.getValue(paymentSettings, paymentConstants.THRESHOLD),
+                        "scriptUrl" : helper.getValue(paymentSettings, paymentConstants.SCRIPT_URL),
                         "orderProcessing" : helper.getValue(paymentSettings, paymentConstants.ORDERPROCESSING),
                         "captureOnAuthorize": captureOnAuthorize,
                         "isEnabled": paymentSettings.isEnabled
@@ -564,49 +568,10 @@ var paymentHelper = module.exports = {
 	      context.exec.setPaymentAmountCollected(paymentResult.amount);
 	},
 	createNewPayment : function(context,config, paymentAction, payment) {
-		console.log('createNewPayment', paymentAction.amount);
-		var newStatus = { status : paymentConstants.NEW, amount: paymentAction.amount};
-		console.log(newStatus);
-        return newStatus;
-		/*if (paymentAction.amount === 0)
-			return newStatus;
-
-		//affirmPay.configure(config);
-		console.log("config done");
-		try {
-			return helper.getOrderDetails(context,payment.orderId)
-					.then(function(orderDetails) {
-			  orderDetails.amount = paymentAction.amount;
-			  orderDetails.currencyCode=  paymentAction.currencyCode;
-			  console.log("Order Details", orderDetails);
-			  return orderDetails;
-			}).then(function(orderDetails){
-        var existingPayment = _.find(orderDetails.payments,function(payment) { return payment.paymentType === paymentConstants.PAYMENTSETTINGID  && payment.paymentWorkflow === paymentConstants.PAYMENTSETTINGID && payment.status === "Collected";   });
-
-        if (existingPayment) return newStatus;
-
-        return affirmPay.setOrderDetails(paymentAction.externalTransactionId, orderDetails)
-				.then(
-				    function(result) {
-				      return newStatus;
-				    }, function(err) {
-				      console.log("Affirm Create new payment Error", err);
-				      return { status : paymentConstants.FAILED, responseText: err.message, responseCode: err.code};
-				    });
-			}).catch(function(err) {
-				console.log(err);
-				return { status : paymentConstants.FAILED, responseText: err};
-			});
-		} catch(e) {
-			console.error(e);
-			return { status : paymentConstants.FAILED, responseText: e};
-		}
-        */
+		return { status : paymentConstants.NEW, amount: paymentAction.amount};
 	},
 	authorizePayment: function(context, paymentAction, payment) {
-		console.log('authorizePayment');
-        //var config = this.getConfig(context, pwaSettings);
-        //console.log('authorizePayment', config);
+        console.log('authorizePayment');
         return {
               affirmTransactionId: '',
               captureId: null,
