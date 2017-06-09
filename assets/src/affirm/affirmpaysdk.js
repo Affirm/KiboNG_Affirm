@@ -49,7 +49,7 @@ module.exports = function() {
 					if (response.statusCode != 200)
 						reject(response.body);
 					else {
-						resolve(body);
+						resolve( body );
 					}
 				}
 			);

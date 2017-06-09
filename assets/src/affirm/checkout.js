@@ -11,6 +11,7 @@ var FulfillmentInfoClient = require('mozu-node-sdk/clients/commerce/orders/fulfi
 var helper = require("./helper");
 var OrderResourceFactory = require('mozu-node-sdk/clients/commerce/order');
 var OrderPayment = require('mozu-node-sdk/clients/commerce/orders/payment');
+var BillInfoResourceFactory = require('mozu-node-sdk/clients/commerce/orders/billinginfo');
 var paymentHelper = require("./paymentHelper");
 
 // TODO: Should we add fulfillmentInfo?
@@ -124,32 +125,37 @@ module.exports = function(context, callback) {
 
                 //capture the payment
                 paymentHelper.getPaymentConfig( self.ctx ).then( function( config ) {
-                    affirmPay.capturePayment( params, config ).then( function( result ){
-                        // once the payment is captured, Submit the Order
-                        OrderResourceFactory( self.ctx ).performOrderAction( { actionName: 'SubmitOrder', orderId: mzOrder.id } ).then( function( result ){
+                    affirmPay.capturePayment( params, config ).then( function( affirmResponse ){
+                        // set externalTransactionId to referer affirm Loan ID
+                        mzOrder.billingInfo.externalTransactionId = affirmResponse.id;
 
-                            if( result.Error ){
+                        // update billingInfo
+                        helper.createClientFromContext( BillInfoResourceFactory, self.ctx, true ).setBillingInfo( { orderId: params.id }, { body: mzOrder.billingInfo } ).then( function( billingResult ){
+
+                            // once the payment is captured and billinginfo updated, Submit the Order
+                            OrderResourceFactory( self.ctx ).performOrderAction( { actionName: 'SubmitOrder', orderId: mzOrder.id } ).then( function( orderResult ){
+
+                                if( orderResult.Error ){
+                                    // Submit order failed
+                                    console.log('3.1 Redirect to error', orderResult );
+                                    self.ctx.response.redirect( '/checkout/' + mzOrder.id );
+                                    self.ctx.cache.request.set("Error", orderResult);
+                                    return self.ctx.response.end();
+                                }
+                                else{
+                                    self.ctx.response.redirect( '/checkout/' + mzOrder.id + '/confirmation');
+                                    return self.ctx.response.end();
+                                }
+                            },
+                            function( error ){
                                 // Submit order failed
-                                console.log('3.1 Redirect to error', result );
+                                console.error("2.1 Order Submit error", error);
+                                self.ctx.cache.request.set("Error", error);
+                                helper.addErrorToModel( self.ctx, self.cb, error);
                                 self.ctx.response.redirect( '/checkout/' + mzOrder.id );
-                                self.ctx.cache.request.set("Error", result);
                                 return self.ctx.response.end();
-                            }
-                            else{
-                                // Order Submit
-                                self.ctx.response.redirect( '/checkout/' + mzOrder.id + '/confirmation');
-                                return self.ctx.response.end();
-                            }
-                        },
-                        function( error ){
-                            // Submit order failed
-                            console.error("2.1 Order Submit error", error);
-                            self.ctx.cache.request.set("Error", error);
-                            helper.addErrorToModel( self.ctx, self.cb, error);
-                            self.ctx.response.redirect( '/checkout/' + mzOrder.id );
-                            return self.ctx.response.end();
+                            });
                         });
-
                     },
                     function( error ){
                             console.error("4.1 AFFIRM error", error);
