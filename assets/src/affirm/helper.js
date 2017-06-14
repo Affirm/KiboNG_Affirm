@@ -18,20 +18,20 @@ var helper = module.exports = {
             c.context[constants.headers.USERCLAIMS] = null;
         return c;
     },
-	validateUserSession : function(context) {
-		console.log('validateUserSession');
-		var user = context.items.pageContext.user;
-		if ( !user.isAnonymous && !user.IsAuthenticated )
-		{
-      console.log(context.configuration);
-      var allowWarmCheckout = (context.configuration && context.configuration.allowWarmCheckout);
-      var redirectUrl = '/user/login?returnUrl=' + encodeURIComponent(context.request.url);
-      if (!allowWarmCheckout)
-        redirectUrl = '/logout?returnUrl=' + encodeURIComponent(context.request.url)+"&saveUserId=true";
-			context.response.redirect(redirectUrl);
-			return context.response.end();
-		}
-	},
+    validateUserSession : function(context) {
+        console.log('validateUserSession');
+        var user = context.items.pageContext.user;
+        if ( !user.isAnonymous && !user.IsAuthenticated )
+        {
+            //console.log(context.configuration);
+            var allowWarmCheckout = (context.configuration && context.configuration.allowWarmCheckout);
+            var redirectUrl = '/user/login?returnUrl=' + encodeURIComponent(context.request.url);
+            if (!allowWarmCheckout)
+            redirectUrl = '/logout?returnUrl=' + encodeURIComponent(context.request.url)+"&saveUserId=true";
+            context.response.redirect(redirectUrl);
+            return context.response.end();
+        }
+    },
   getUserEmail : function(context) {
 		console.log('getUserEmail');
     if (!context.items || !context.items.pageContext || !context.items.pageContext.user) return null;
@@ -89,40 +89,57 @@ var helper = module.exports = {
 	  return guid.value.replace(/\-/g, "");
 	},
 	getValue: function(paymentSetting, key) {
-		//console.log('getValue', paymentSetting, key);
-	  var value = _.findWhere(paymentSetting.credentials, {"apiName" : key}) || _.findWhere(paymentSetting.Credentials, {"APIName" : key});
+        var value = _.findWhere(paymentSetting.credentials, {"apiName" : key}) || _.findWhere(paymentSetting.Credentials, {"APIName" : key});
 
-	    if (!value) {
-	      console.log(key+" not found");
-	      return;
-	    }
-	    //console.log("return Key: "+key, value.value );
-	    return value.value || value.Value;
-	},
-	addErrorToModel: function(context, callback, err) {
-		console.log('addErrorToModel');
-	    console.error("Adding error to viewData", err);
-	    var message = err;
-	    if (err.statusText)
-	      message = err.statusText;
-      else if (err.originalError) {
-          console.error("originalError", err.originalError);
-          if (err.originalError.items && err.originalError.items.length > 0)
-            message = err.originalError.items[0].message;
-          else
-           message = err.originalError.message;
-      }
-	    else if (err.message){
-	      message = err.message;
-	      if (message.errorMessage)
-	        message = message.errorMessage;
-	    }
-	    else if (err.errorMessage)
-	      message = err.errorMessage;
-	    context.response.viewData.model.messages =  [
-	      {"message": message}
-	    ];
-	    callback();
-	}
+        if (!value) {
+            console.log(key+" not found");
+            return;
+        }
+        //console.log("return Key: "+key, value.value );
+        return value.value || value.Value;
+    },
+    addErrorToModel: function(context, callback, err) {
+        console.log('0. Adding error to viewData');
+        var message = err;
+        if ( err.statusText ){
+            message = err.statusText;
+        }
+        else if (err.originalError) {
+            if (err.originalError.items && err.originalError.items.length > 0)
+                message = err.originalError.items[0].message;
+            else
+                message = err.originalError.message;
+        }
+        else if (err.message){
+            message = err.message;
+            if (message.errorMessage)
+                message = message.errorMessage;
+        }
+        else if (err.errorMessage){
+            message = err.errorMessage;
+        }
+
+        if( context.response && context.response.viewData && context.response.viewData.model ){
+            context.response.viewData.model.messages =  [
+                {"message": message}
+            ];
+        }
+        else if( context.response && context.response.message ){
+            context.response.message =  [
+                {"message": message}
+            ];
+        }
+        else{
+            try {
+                context.response.message =  [
+                    {"message": message}
+                ];
+            } catch (e) {
+                console.log( e );
+            }
+
+        }
+        callback();
+    }
 
 };

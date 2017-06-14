@@ -102,7 +102,7 @@ module.exports = function(context, callback) {
         try{
             // parse response to get the token
             var params = affirmPay.getToken( self.ctx );
-
+            console.log( 'Message received from Affirm with Params', params );
             if( !( params.checkout_token && params.id ) ){
                 var err = 'Affirm Token not present';
                 console.error( err );
@@ -125,24 +125,26 @@ module.exports = function(context, callback) {
 
                 //capture the payment
                 paymentHelper.getPaymentConfig( self.ctx ).then( function( config ) {
+
+                    console.log( 'Affirm charges', config, params );
+
                     affirmPay.capturePayment( params, config ).then( function( affirmResponse ){
                         // set externalTransactionId to referer affirm Loan ID
                         mzOrder.billingInfo.externalTransactionId = affirmResponse.id;
-
+                        console.log( 'Affirm Info set', affirmResponse );
                         // update billingInfo
                         helper.createClientFromContext( BillInfoResourceFactory, self.ctx, true ).setBillingInfo( { orderId: params.id }, { body: mzOrder.billingInfo } ).then( function( billingResult ){
-
                             // once the payment is captured and billinginfo updated, Submit the Order
                             OrderResourceFactory( self.ctx ).performOrderAction( { actionName: 'SubmitOrder', orderId: mzOrder.id } ).then( function( orderResult ){
 
                                 if( orderResult.Error ){
                                     // Submit order failed
-                                    console.log('3.1 Redirect to error', orderResult );
-                                    self.ctx.response.redirect( '/checkout/' + mzOrder.id );
+                                    self.ctx.response.redirect( '/cart/' + mzOrder.id );
                                     self.ctx.cache.request.set("Error", orderResult);
                                     return self.ctx.response.end();
                                 }
                                 else{
+                                    // all good go to confirmation page
                                     self.ctx.response.redirect( '/checkout/' + mzOrder.id + '/confirmation');
                                     return self.ctx.response.end();
                                 }
@@ -150,18 +152,18 @@ module.exports = function(context, callback) {
                             function( error ){
                                 // Submit order failed
                                 console.error("2.1 Order Submit error", error);
+                                self.ctx.response.redirect( '/cart' );
                                 self.ctx.cache.request.set("Error", error);
-                                helper.addErrorToModel( self.ctx, self.cb, error);
-                                self.ctx.response.redirect( '/checkout/' + mzOrder.id );
+                                self.ctx.cache.request.set("affirmError", error);
                                 return self.ctx.response.end();
                             });
                         });
                     },
                     function( error ){
-                            console.error("4.1 AFFIRM error", error);
+                            // handle affirm response error
                             self.ctx.cache.request.set("Error", error);
                             helper.addErrorToModel( self.ctx, self.cb, error);
-                            self.ctx.response.redirect( '/checkout/' + mzOrder.id );
+                            self.ctx.response.redirect( '/cart/' + mzOrder.id );
                             return self.ctx.response.end();
                     });
                 });
@@ -169,7 +171,7 @@ module.exports = function(context, callback) {
         );
     } catch(e) {
         console.error(e);
-        self.ctx.response.redirect( '/checkout' );
+        self.ctx.response.redirect( '/cart' );
         self.ctx.cache.request.set("Error", e);
         return self.ctx.response.end();
     }
