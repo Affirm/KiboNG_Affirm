@@ -138,12 +138,22 @@
  */
 
  var AffirmCheckout = require("../../affirm/checkout");
+ var helper = require('../../affirm/helper');
 
 var Order = require("mozu-node-sdk/clients/commerce/order");
 module.exports = function(context, callback) {
   try{
     var affirmCheckout = new AffirmCheckout(context, callback);
     console.log("PROCESS Order action", context);
+    //callback();
+    console.log('2. CHECKOUT AFTER', context.cache.request.get("affirmError"));
+  var affirmError = context.cache.request.get("affirmError");
+  if (affirmError){
+      callback( affirmError );
+      //helper.addErrorToModel( context, callback, affirmError);
+  }
+  else{
+    callback( );}
     //affirmCheckout.closeOrder();
   } catch(e) {
     callback(e);

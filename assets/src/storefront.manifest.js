@@ -9,6 +9,10 @@ module.exports = {
   'affirmCheckoutAfter': {
       actionName: 'http.storefront.pages.checkout.request.after',
       customFunction: require('./domains/storefront/affirmCheckoutAfter')
-  }
+  },
+  'affirmCartAfter': {
+      actionName: 'http.storefront.pages.cart.request.after',
+      customFunction: require('./domains/storefront/affirmCartAfter')
+  },
 }
 */

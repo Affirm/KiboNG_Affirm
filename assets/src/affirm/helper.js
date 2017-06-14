@@ -43,12 +43,10 @@ var helper = module.exports = {
     }
     return null;
   },
-	getPaymentFQN: function(context) {
-		console.log('getPaymentFQN');
-		var appInfo = getAppInfo(context);
-		console.log("App Info", appInfo);
-		return appInfo.namespace+"~"+paymentConstants.PAYMENTSETTINGID;
-	},
+  getPaymentFQN: function(context) {
+        var appInfo = getAppInfo(context);
+        return appInfo.namespace+"~"+paymentConstants.PAYMENTSETTINGID;
+    },
 	isAffirmCheckout: function (context) {
 	  var params = this.parseUrlParams(context);
 	  var hasAffirmParams = _.has(params, 'access_token') && _.has(params, "isAffirmCheckout");

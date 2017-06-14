@@ -42,7 +42,6 @@ var paymentHelper = module.exports = {
     	return config;
 	},
     validatePaymentSettings: function(context, callback) {
-        console.log( 'validatePaymentSettings' );
         var self = this;
         var paymentSettings = context.request.body;
 
@@ -75,7 +74,8 @@ var paymentHelper = module.exports = {
 	    if (paymentAction.manualGatewayInteraction)
 	      isManual = true;
 
-        console.log('0. processPaymentResult', paymentAction, paymentResult);
+        //console.log('0. processPaymentResult', paymentAction, paymentResult);
+        console.log('0. processPaymentResult', paymentAction.actionName );
 	    switch(paymentAction.actionName) {
 	            case "VoidPayment":
 	               interactionType = "Void";
@@ -122,22 +122,27 @@ var paymentHelper = module.exports = {
 
 	    context.exec.addPaymentInteraction(interaction);
 	    if (paymentResult.captureOnAuthorize) {
-	      interaction.gatewayTransactionId = paymentResult.captureId;
-	      interaction.status = paymentConstants.CAPTURED;
-	      context.exec.addPaymentInteraction(interaction);
+            console.log('4. processPaymentResult', paymentResult.captureOnAuthorize);
+            interaction.gatewayTransactionId = paymentResult.captureId;
+            interaction.status = paymentConstants.CAPTURED;
+            console.log('4.1 processPaymentResult - CAPTURED');
+            context.exec.addPaymentInteraction(interaction);
+            console.log('4.2 processPaymentResult');
 	    }
 
 	    if (paymentResult.status == paymentConstants.CREDITPENDING){
-	      context.exec.setPaymentAmountCredited(paymentResult.amount);
+            console.log('5. processPaymentResult - CREDITPENDING');
+            context.exec.setPaymentAmountCredited(paymentResult.amount);
       }
-	    if (paymentResult.status == paymentConstants.CAPTURED){
-          context.exec.setPaymentAmountCollected(paymentResult.amount);
+        if (paymentResult.status == paymentConstants.CAPTURED){
+            console.log('6. processPaymentResult - CAPTURED');
+            context.exec.setPaymentAmountCollected(paymentResult.amount);
       }
 	},
 	createNewPayment : function(context,config, paymentAction, payment) {
 		return { status : paymentConstants.NEW, amount: paymentAction.amount};
 	},
-	authorizePayment: function(context, paymentAction, payment) {
+	authorizePayment: function(context, captureOnAuthorize, paymentAction, payment) {
         return {
               affirmTransactionId: '',
               captureId: null,
@@ -145,7 +150,7 @@ var paymentHelper = module.exports = {
               responseText:  'plaease capture the payment',//state,
               status: paymentConstants.AUTHORIZED,
               amount: payment.amountRequested,
-              captureOnAuthorize: true //config.captureOnAuthorize
+              captureOnAuthorize: captureOnAuthorize
             };
 
 	},
@@ -159,14 +164,15 @@ var paymentHelper = module.exports = {
                 result.status = paymentConstants.DECLINED;
                 return result;
             }
-            return this.authorizePayment(context, paymentAction, payment);
+            return this.authorizePayment(context, config.captureOnAuthorize, paymentAction, payment);
   		} catch(e) {
   			console.error(e);
   			return {status : paymentConstants.DECLINED, responseText: e};
   		}
 	},
 	captureAmount: function (context, config, paymentAction, payment) {
-        console.log( 'captureAmount', paymentAction, payment );
+        console.log( '0. captureAmount called' );
+        console.log( '1. captureAmount called', paymentAction, payment );
         var response = {
           status : (state == "Completed" ? paymentConstants.CAPTURED : paymentConstants.FAILED),
           awsTransactionId: captureId,
