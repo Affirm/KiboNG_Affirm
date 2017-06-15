@@ -102,7 +102,7 @@ module.exports = function(context, callback) {
         try{
             // parse response to get the token
             var params = affirmPay.getToken( self.ctx );
-            console.log( 'Message received from Affirm with Params', params );
+
             if( !( params.checkout_token && params.id ) ){
                 var err = 'Affirm Token not present';
                 console.error( err );
@@ -126,12 +126,10 @@ module.exports = function(context, callback) {
                 //capture the payment
                 paymentHelper.getPaymentConfig( self.ctx ).then( function( config ) {
 
-                    console.log( 'Affirm charges', config, params );
-
-                    affirmPay.capturePayment( params, config ).then( function( affirmResponse ){
+                    // authorize Affirm Payment
+                    affirmPay.authorizePayment( params, config ).then( function( affirmResponse ){
                         // set externalTransactionId to referer affirm Loan ID
                         mzOrder.billingInfo.externalTransactionId = affirmResponse.id;
-                        console.log( 'Affirm Info set', affirmResponse );
                         // update billingInfo
                         helper.createClientFromContext( BillInfoResourceFactory, self.ctx, true ).setBillingInfo( { orderId: params.id }, { body: mzOrder.billingInfo } ).then( function( billingResult ){
                             // once the payment is captured and billinginfo updated, Submit the Order

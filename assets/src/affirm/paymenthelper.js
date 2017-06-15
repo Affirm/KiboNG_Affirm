@@ -108,8 +108,8 @@ var paymentHelper = module.exports = {
 	    if (paymentResult.amount)
 	      interaction.amount = paymentResult.amount;
 
-	    if (paymentResult.awsTransactionId)
-	      interaction.gatewayTransactionId = paymentResult.awsTransactionId;
+	    if (paymentResult.affirmTransactionId)
+	      interaction.gatewayTransactionId = paymentResult.affirmTransactionId;
 
 	    if (paymentResult.responseText)
 	      interaction.gatewayResponseText= paymentResult.responseText;
@@ -144,10 +144,10 @@ var paymentHelper = module.exports = {
 	},
 	authorizePayment: function(context, captureOnAuthorize, paymentAction, payment) {
         return {
-              affirmTransactionId: '',
+              affirmTransactionId: payment.externalTransactionId,
               captureId: null,
               responseCode: 200,
-              responseText:  'plaease capture the payment',//state,
+              responseText:  'authorized',
               status: paymentConstants.AUTHORIZED,
               amount: payment.amountRequested,
               captureOnAuthorize: captureOnAuthorize
@@ -171,69 +171,54 @@ var paymentHelper = module.exports = {
   		}
 	},
 	captureAmount: function (context, config, paymentAction, payment) {
-        console.log( '0. captureAmount called' );
-        console.log( '1. captureAmount called', paymentAction, payment );
-        var response = {
-          status : (state == "Completed" ? paymentConstants.CAPTURED : paymentConstants.FAILED),
-          awsTransactionId: captureId,
-          responseText: state,
-          responseCode: 200,
-          amount: orderDetails.captureAmount
-        };
-
-        return response;
-
-	},
-	creditPayment: function (context, config, paymentAction, payment) {
-		console.log('creditPayment');
-		var self = this;
-		affirmPay.configure(config);
-		return helper.getOrderDetails(context,payment.orderId).then(function(orderDetails) {
-			var capturedInteraction = self.getInteractionByStatus(payment.interactions,paymentConstants.CAPTURED);
-			console.log("AWS Refund, previous capturedInteraction", capturedInteraction);
-			if (!capturedInteraction) {
-				return {status : paymentConstants.FAILED, responseCode: "InvalidRequest", responseText: "Payment has not been captured to issue refund"};
-			}
-
-			if (paymentAction.manualGatewayInteraction) {
-				console.log("Manual credit...dont send to affirm");
-				return {amount: paymentAction.amount,gatewayResponseCode:  "OK", status: paymentConstants.CREDITED,
-				        awsTransactionId: paymentAction.manualGatewayInteraction.gatewayInteractionId};
-			}
-
-			orderDetails.amount = paymentAction.amount;
-			orderDetails.currencyCode = paymentAction.currencyCode;
-			orderDetails.note = paymentAction.reason;
-			orderDetails.id = helper.getUniqueId();
-
-
-			console.log("Refund details", orderDetails);
-			return affirmPay.refund(capturedInteraction.gatewayTransactionId, orderDetails).then(
-			function(refundResult) {
-				var refundDetails = refundResult.RefundResponse.RefundResult.RefundDetails;
-				console.log("AWS Refund result", refundDetails);
-				var state = refundDetails.RefundStatus.State;
-				var refundId = refundDetails.AffirmRefundId;
-
-				var response = {
-					status : ( state == "Pending" ? paymentConstants.CREDITPENDING : (state == "Completed" ? paymentConstants.CREDITED : paymentConstants.FAILED)),
-					awsTransactionId: refundId,
-					responseText: state,
-					responseCode: 200,
-					amount: paymentAction.amount
-				};
-				console.log("Refund response", response);
-				return response;
-			}, function(err) {
-				console.error("Capture Error", err);
-				return {status : paymentConstants.FAILED,
-				        responseText: err.message,
-				    responseCode: err.code};
-			});
-		}).catch(function(err) {
-			console.error(err);
-			return { status : paymentConstants.FAILED, responseText: err};
-		});
+        // get payment config
+        return this.getPaymentConfig( context ).then( function( config ) {
+            return helper.getOrderDetails( context, payment.orderId ).then( function( orderDetails ) {
+                // capture the payment
+                return affirmPay.capturePayment( { chargeId: payment.externalTransactionId, orderId: orderDetails.orderId }, config ).then( function( affirmResponse ){
+                        return {
+                          status : paymentConstants.CAPTURED,
+                          affirmTransactionId: affirmResponse.transaction_id,
+                          responseText: 'Captured Amount: ' + affirmResponse.currency + ' ' + affirmResponse.amount / 100,
+                          responseCode: 200,
+                          amount: paymentAction.amount
+                        };
+                    }, function( error ){
+                        console.log( 'Validate Affirm error', error );
+                        return { status: paymentConstants.FAILED, responseText: error.message, responseCode: error.status_code };
+                });
+            }).catch(function(err) {
+    			console.error(err);
+    			return { status : paymentConstants.FAILED, responseText: err };
+    		});
+        });
+    },
+    creditPayment: function (context, config, paymentAction, payment) {
+        console.log('0. refundPayment');
+        // get payment config
+        return this.getPaymentConfig( context ).then( function( config ) {
+            console.log('1. refundPayment');
+            return helper.getOrderDetails( context, payment.orderId ).then( function( orderDetails ) {
+                console.log('2. refundPayment');
+                // capture the payment
+                return affirmPay.refundPayment( { chargeId: payment.externalTransactionId, orderId: orderDetails.orderId }, config ).then( function( affirmResponse ){
+                    console.log('3. refundPayment - affirmResponse', affirmResponse );
+                    return {
+                          status : paymentConstants.CREDITED,
+                          affirmTransactionId: affirmResponse.transaction_id,
+                          responseText: 'refunded Amount: ' + affirmResponse.amount / 100,
+                          responseCode: 200,
+                          amount: paymentAction.amount
+                        };
+                    }, function( error ){
+                        console.log( 'Validate Affirm error', error );
+                        return { status: paymentConstants.FAILED, responseText: error.message, responseCode: error.status_code };
+                });
+            }).catch(function(err) {
+                console.error( err );
+                return { status : paymentConstants.FAILED, responseText: err };
+            });
+        });
 	},
 	voidPayment : function (context, config, paymentAction, payment) {
 		console.log('voidPayment');
