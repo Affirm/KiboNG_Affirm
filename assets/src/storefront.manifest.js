@@ -1,4 +1,8 @@
 module.exports = {
+  'affirmCartAfter': {
+    actionName: 'http.storefront.pages.cart.request.after',
+    customFunction: require('./domains/storefront/affirmCartAfter')
+    },
   'affirmProcessor': {
       actionName: 'http.storefront.routes',
       customFunction: require('./domains/storefront/affirmProcessor')

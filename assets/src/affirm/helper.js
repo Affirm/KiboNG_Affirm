@@ -18,58 +18,17 @@ var helper = module.exports = {
             c.context[constants.headers.USERCLAIMS] = null;
         return c;
     },
-    validateUserSession : function(context) {
-        console.log('validateUserSession');
-        var user = context.items.pageContext.user;
-        if ( !user.isAnonymous && !user.IsAuthenticated )
-        {
-            //console.log(context.configuration);
-            var allowWarmCheckout = (context.configuration && context.configuration.allowWarmCheckout);
-            var redirectUrl = '/user/login?returnUrl=' + encodeURIComponent(context.request.url);
-            if (!allowWarmCheckout)
-            redirectUrl = '/logout?returnUrl=' + encodeURIComponent(context.request.url)+"&saveUserId=true";
-            context.response.redirect(redirectUrl);
-            return context.response.end();
-        }
-    },
-  getUserEmail : function(context) {
-		console.log('getUserEmail');
-    if (!context.items || !context.items.pageContext || !context.items.pageContext.user) return null;
-    var user = context.items.pageContext.user;
-    console.log("user", user);
-    if ( !user.isAnonymous && user.IsAuthenticated ) {
-      console.log(user);
-      return user.email;
-    }
-    return null;
-  },
-  getPaymentFQN: function(context) {
+    getPaymentFQN: function(context) {
         var appInfo = getAppInfo(context);
         return appInfo.namespace+"~"+paymentConstants.PAYMENTSETTINGID;
     },
-	isAffirmCheckout: function (context) {
-	  var params = this.parseUrlParams(context);
-	  var hasAffirmParams = _.has(params, 'access_token') && _.has(params, "isAffirmCheckout");
-	  return hasAffirmParams;
-	},
 	parseUrlParams: function(context) {
-		//console.log('parseUrlParams');
 		var request = context.request;
 		var urlParseResult = url.parse(request.url);
-		//console.log("parsedUrl", urlParseResult);
 		queryStringParams = qs.parse(urlParseResult.query);
 		return queryStringParams;
 	},
-	isCartPage: function(context) {
-		console.log('isCartPage');
-		return context.request.url.indexOf("/cart") > -1;
-	},
-	isCheckoutPage: function(context) {
-		console.log('isCheckoutPage');
-		return context.request.url.indexOf("/checkout") > -1;
-	},
 	getOrderDetails: function(context, orderId) {
-		console.log('getOrderDetails');
 		var orderClient = this.createClientFromContext(Order,context);
 		var generalSettingsClient = this.createClientFromContext(GeneralSettings, context, true);
 
@@ -81,11 +40,6 @@ var helper = module.exports = {
 			    });
 	  		});
 	},
-	getUniqueId: function () {
-		console.log('getUniqueId');
-	  var guid = Guid.create();
-	  return guid.value.replace(/\-/g, "");
-	},
 	getValue: function(paymentSetting, key) {
         var value = _.findWhere(paymentSetting.credentials, {"apiName" : key}) || _.findWhere(paymentSetting.Credentials, {"APIName" : key});
 
@@ -93,11 +47,30 @@ var helper = module.exports = {
             console.log(key+" not found");
             return;
         }
-        //console.log("return Key: "+key, value.value );
         return value.value || value.Value;
     },
+    setAffirmError: function( context, error ){
+        try {
+            // set affirm error in cache
+            context.cache.getOrCreate( {type:'distributed', scope:'tenant', level:'shared'} ).set( 'affirmError', error );
+        } catch ( err ) {
+            console.log( err );
+            return false;
+        }
+    },
+    getAffirmError: function( context ){
+        try {
+            // get Affrim Error from cache
+            cache  = context.cache.getOrCreate( {type:'distributed', scope:'tenant', level:'shared'} );
+            var affirmError = cache.get( 'affirmError' );
+            // cleanup the cache
+            cache.set( 'affirmError', '' );
+            return affirmError;
+        } catch (e) {
+            return false;
+        }
+    },
     addErrorToModel: function(context, callback, err) {
-        console.log('0. Adding error to viewData');
         var message = err;
         if ( err.statusText ){
             message = err.statusText;

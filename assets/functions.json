@@ -16,6 +16,11 @@
       "actionId": "embedded.platform.applications.install"
     },
     {
+      "id": "affirmCartAfter",
+      "virtualPath": "./dist\\storefront.manifest.all.js",
+      "actionId": "http.storefront.pages.cart.request.after"
+    },
+    {
       "id": "affirmProcessor",
       "virtualPath": "./dist\\storefront.manifest.all.js",
       "actionId": "http.storefront.routes"

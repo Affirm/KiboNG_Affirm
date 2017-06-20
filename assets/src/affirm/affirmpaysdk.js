@@ -2,23 +2,6 @@ var _ 		= require("underscore");
 var needle 	= require('needle');
 var helper = require("./helper");
 
-// TODO: shold we handle Payament Capture? Payment Void?
-
-    var buildParamString = function(params, uriEncodeValues) {
-        var keys = _.keys(params).sort();
-        var paramStr = "";
-        _.each(keys, function(key) {
-            if (paramStr !== "")
-                paramStr += "&";
-            paramStr += key+"=";
-            if (uriEncodeValues)
-                paramStr += encodeURIComponent(params[key]);
-            else
-                paramStr += params[key];
-        });
-        return paramStr;
-    };
-
 module.exports = function() {
     var self = this;
 
@@ -32,12 +15,11 @@ module.exports = function() {
     };
 
     self.closeOrder = function( mzOrder, affirmToken ) {
-        console.log('Affirm Need closeOrder?');
+        console.log('Not Implemented - Affirm dosnt Need closeOrder?');
     };
 
     // call affirm charges to capture the payment
     self.authorizePayment = function( params, config ) {
-
         var options = {
                 json: true,
                 headers: { 'Authorization':'Basic ' + new Buffer( config.publicapikey + ':' + config.privateapikey ).toString('base64')  }
@@ -100,26 +82,13 @@ module.exports = function() {
 		});
 		return promise;
 	};
-    self.executeRequest = function( action, params ) {
-        console.log('executeRequest');
-
-        return true;
-    };
-
 
     self.configure = function(config) {
-		console.log('Affirm Need Config?');
-	};
-
-	self.executeRequest = function(action, params) {
-		console.log('executeRequest');
+		console.log('Not Implemented - Affirm dosnt Need config?');
 	};
 
 	self.confirmOrder = function(orderReferenceId) {
-		var params = {};
-		params.AffirmOrderReferenceId = orderReferenceId;
-		console.log("Confirming Affirm Order", params);
-		return executeRequest("ConfirmOrderReference", params);
+		console.log('Not Implemented - Affirm dosnt Need confirm?');
 	};
 
 	return self;

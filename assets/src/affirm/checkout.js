@@ -21,14 +21,6 @@ module.exports = function(context, callback) {
     self.ctx = context;
     self.cb = callback;
 
-    self.validateUserSession = function() {
-        var user = self.ctx.items.pageContext.user;
-        if ( !user.isAnonymous && !user.IsAuthenticated ){
-            self.ctx.response.redirect('/user/login?returnUrl=' + encodeURIComponent(context.request.url));
-            return context.response.end();
-        }
-    };
-
     // Process Affirm payment interactions
     self.processPayment = function() {
         var paymentAction = self.ctx.get.paymentAction();
@@ -106,8 +98,8 @@ module.exports = function(context, callback) {
             if( !( params.checkout_token && params.id ) ){
                 var err = 'Affirm Token not present';
                 console.error( err );
-                self.ctx.response.redirect( '/checkout/' + params.id );
-                self.ctx.cache.request.set("Error", err);
+                helper.setAffirmError( self.ctx, err );
+                self.ctx.response.redirect( '/cart' );
                 return self.ctx.response.end();
             }
 
@@ -116,10 +108,10 @@ module.exports = function(context, callback) {
             helper.createClientFromContext( OrderResourceFactory, self.ctx, true ).getOrder( { orderId: params.id } ).then( function( mzOrder ){
 
                 if( mzOrder.availableActions.indexOf( 'SubmitOrder' ) < 0 ){
-                    var err = 'Can NOT Submit order';
+                    var err = 'There is a problem to submit the order';
                     console.error( err );
-                    self.ctx.response.redirect( '/checkout/' + mzOrder.id );
-                    self.ctx.cache.request.set("Error", err);
+                    helper.setAffirmError( self.ctx, err );
+                    self.ctx.response.redirect( '/cart' );
                     return self.ctx.response.end();
                 }
 
@@ -137,8 +129,8 @@ module.exports = function(context, callback) {
 
                                 if( orderResult.Error ){
                                     // Submit order failed
-                                    self.ctx.response.redirect( '/cart/' + mzOrder.id );
-                                    self.ctx.cache.request.set("Error", orderResult);
+                                    helper.setAffirmError( self.ctx, orderResult.Error );
+                                    self.ctx.response.redirect( '/cart' );
                                     return self.ctx.response.end();
                                 }
                                 else{
@@ -150,9 +142,8 @@ module.exports = function(context, callback) {
                             function( error ){
                                 // Submit order failed
                                 console.error("2.1 Order Submit error", error);
+                                helper.setAffirmError( self.ctx, error );
                                 self.ctx.response.redirect( '/cart' );
-                                self.ctx.cache.request.set("Error", error);
-                                self.ctx.cache.request.set("affirmError", error);
                                 return self.ctx.response.end();
                             });
                         });
@@ -160,8 +151,8 @@ module.exports = function(context, callback) {
                     function( error ){
                             // handle affirm response error
                             self.ctx.cache.request.set("Error", error);
-                            helper.addErrorToModel( self.ctx, self.cb, error);
-                            self.ctx.response.redirect( '/cart/' + mzOrder.id );
+                            helper.setAffirmError( self.ctx, error);
+                            self.ctx.response.redirect( '/cart' );
                             return self.ctx.response.end();
                     });
                 });
@@ -169,8 +160,8 @@ module.exports = function(context, callback) {
         );
     } catch(e) {
         console.error(e);
+        helper.setAffirmError( self.ctx, e);
         self.ctx.response.redirect( '/cart' );
-        self.ctx.cache.request.set("Error", e);
         return self.ctx.response.end();
     }
   };
@@ -178,7 +169,7 @@ module.exports = function(context, callback) {
 
   self.setError = function(context, callback, error) {
     console.log(err);
-    context.cache.request.set("affirmError", err);
+    context.cache.request.set( "affirmError", err );
     callback();
   };
 };

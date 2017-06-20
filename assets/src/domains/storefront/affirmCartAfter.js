@@ -1,5 +1,5 @@
 /**
- * Implementation for http.storefront.routes
+ * Implementation for http.storefront.pages.cart.request.before
 
 
  * HTTP Actions all receive a similar context object that includes
@@ -18,16 +18,23 @@
  *
  * The `request` and `response` objects are both Streams and you can read
  * data out of them the way that you would in Node.
-
  */
 
-var AffirmCheckout = require("../../affirm/checkout");
+var helper = require("../../affirm/helper");
 
 module.exports = function(context, callback) {
-    try{
-        var affirmCheckout = new AffirmCheckout(context, callback);
-        affirmCheckout.closeOrder();
-    } catch(e) {
-      callback(e);
+    try {
+        // get affrim Error
+        var affirmError = helper.getAffirmError( context );
+        if( affirmError ){
+            helper.addErrorToModel( context, callback, affirmError );
+        }
+        else{
+            // continue to cart
+            callback();
+        }
+    } catch ( error ) {
+        console.error( error );
+        callback( error );
     }
 };

@@ -12,9 +12,9 @@ var paymentHelper = module.exports = {
 	getPaymentConfig: function(context) {
 		var self = this;
 		return helper.createClientFromContext( PaymentSettings, context, true )
-		      .getThirdPartyPaymentWorkflowWithValues( { fullyQualifiedName: helper.getPaymentFQN(context)} )
-  	           .then(function(paymentSettings) {
-      		       return self.getConfig(context, paymentSettings);
+		      .getThirdPartyPaymentWorkflowWithValues( { fullyQualifiedName: helper.getPaymentFQN(context) } )
+  	           .then( function( paymentSettings ) {
+      		       return self.getConfig( context, paymentSettings );
     	});
 	},
 	getConfig: function(context, paymentSettings) {
@@ -118,24 +118,19 @@ var paymentHelper = module.exports = {
 	      interaction.gatewayResponseCode= paymentResult.responseCode;
 
 	    interaction.isManual = isManual;
-	    console.log('3. processPaymentResult', interaction);
+	    console.log('2. processPaymentResult', interaction, 'captureOnAuthorize: ' , paymentResult.captureOnAuthorize);
 
 	    context.exec.addPaymentInteraction(interaction);
 	    if (paymentResult.captureOnAuthorize) {
-            console.log('4. processPaymentResult', paymentResult.captureOnAuthorize);
             interaction.gatewayTransactionId = paymentResult.captureId;
             interaction.status = paymentConstants.CAPTURED;
-            console.log('4.1 processPaymentResult - CAPTURED');
             context.exec.addPaymentInteraction(interaction);
-            console.log('4.2 processPaymentResult');
 	    }
 
 	    if (paymentResult.status == paymentConstants.CREDITPENDING){
-            console.log('5. processPaymentResult - CREDITPENDING');
             context.exec.setPaymentAmountCredited(paymentResult.amount);
       }
         if (paymentResult.status == paymentConstants.CAPTURED){
-            console.log('6. processPaymentResult - CAPTURED');
             context.exec.setPaymentAmountCollected(paymentResult.amount);
       }
 	},
@@ -145,14 +140,13 @@ var paymentHelper = module.exports = {
 	authorizePayment: function(context, captureOnAuthorize, paymentAction, payment) {
         return {
               affirmTransactionId: payment.externalTransactionId,
-              captureId: null,
+              captureId: null, // is not pressent at this time
               responseCode: 200,
               responseText:  'authorized',
               status: paymentConstants.AUTHORIZED,
               amount: payment.amountRequested,
               captureOnAuthorize: captureOnAuthorize
             };
-
 	},
 	confirmAndAuthorize: function (context, config, paymentAction, payment) {
 		console.log( 'confirmAndAuthorize', paymentAction, payment );
@@ -194,19 +188,15 @@ var paymentHelper = module.exports = {
         });
     },
     creditPayment: function (context, config, paymentAction, payment) {
-        console.log('0. refundPayment');
         // get payment config
         return this.getPaymentConfig( context ).then( function( config ) {
-            console.log('1. refundPayment');
             return helper.getOrderDetails( context, payment.orderId ).then( function( orderDetails ) {
-                console.log('2. refundPayment');
                 // capture the payment
                 return affirmPay.refundPayment( { chargeId: payment.externalTransactionId, orderId: orderDetails.orderId }, config ).then( function( affirmResponse ){
-                    console.log('3. refundPayment - affirmResponse', affirmResponse );
                     return {
                           status : paymentConstants.CREDITED,
                           affirmTransactionId: affirmResponse.transaction_id,
-                          responseText: 'refunded Amount: ' + affirmResponse.amount / 100,
+                          responseText: 'Refunded Amount: ' + affirmResponse.amount / 100,
                           responseCode: 200,
                           amount: paymentAction.amount
                         };
@@ -221,64 +211,11 @@ var paymentHelper = module.exports = {
         });
 	},
 	voidPayment : function (context, config, paymentAction, payment) {
-		console.log('voidPayment');
-		var self = this;
-		affirmPay.configure(config);
-	  //var promise = new Promise(function(resolve, reject) {
-	    if (paymentAction.manualGatewayInteraction) {
-	          console.log("Manual void...dont send to affirm");
-	          return {amount: paymentAction.amount,gatewayResponseCode:  "OK", status: paymentConstants.VOIDED,
-	                  awsTransactionId: paymentAction.manualGatewayInteraction.gatewayInteractionId};
-	    }
-
-	    var capturedInteraction = self.getInteractionByStatus(payment.interactions,paymentConstants.CAPTURED);
-	    console.log("Void Payment - Captured interaction", capturedInteraction);
-	    if (capturedInteraction) {
-	      return {status : paymentConstants.FAILED, responseCode: "InvalidRequest", responseText: "Payment with captures cannot be voided. Please issue a refund"};
-	    }
-
-	    var authorizedInteraction = self.getInteractionByStatus(payment.interactions,paymentConstants.AUTHORIZED);
-	    if (!authorizedInteraction)
-	      return {status: paymentConstants.VOIDED};
-
-	    return affirmPay.cancelOrder(payment.externalTransactionId).then(function(result) {
-	      console.log("Affirm cancel result", result);
-	      return {status: paymentConstants.VOIDED, amount: paymentAction.amount};
-	    }, function(err){
-	       console.error("Affirm cancel failed", err);
-	        return {status: paymentConstants.FAILED,responseText: err.message,responseCode: err.code};
-	    }).catch(function(err) {
-			console.error(err);
-			return { status : paymentConstants.FAILED, responseText: err};
-		});
-
-	  //});
-	  //return promise;
+		// TODO: implement Void payment into affirm
+        console.log( 'VoidPayment into affirm');
 	},
 	declinePayment: function (context, config, paymentAction, payment) {
-		console.log('declinePayment');
-		var self = this;
-	    if (paymentAction.manualGatewayInteraction) {
-	          console.log("Manual decline...dont send to affirm");
-	          return {amount: paymentAction.amount,gatewayResponseCode:  "OK", status: paymentConstants.DECLINED,
-	                  awsTransactionId: paymentAction.manualGatewayInteraction.gatewayInteractionId};
-	    }
-	    var capturedInteraction = getInteractionByStatus(payment.interactions, paymentConstants.CAPTURED);
-	    if (capturedInteraction) {
-	      console.log("Capture found for payment, cannot decline");
-	      return {status: paymentConstants.FAILED, responseCode: "InvalidRequest", responseText: "Payment with captures cannot be declined"};
-	    }
-
-		affirmPay.configure(config);
-	    return affirmPay.cancelOrder(payment.externalTransactionId).then(function(result){
-	      console.log(result);
-	      return {status:paymentConstants.DECLINED};
-	    }, function(err) {
-	      console.error(err);
-	      return {status:paymentConstants.FAILED, responseText: err.message, responseCode: err.code};
-	    });
+        // TODO: implement Void payment into affirm
+        console.log( 'DeclinePayment into affirm');
 	}
-
-
-
 };
