@@ -117,7 +117,6 @@ module.exports = function(context, callback) {
 
                 //capture the payment
                 paymentHelper.getPaymentConfig( self.ctx ).then( function( config ) {
-
                     // authorize Affirm Payment
                     affirmPay.authorizePayment( params, config ).then( function( affirmResponse ){
                         // set externalTransactionId to referer affirm Loan ID
@@ -126,9 +125,9 @@ module.exports = function(context, callback) {
                         helper.createClientFromContext( BillInfoResourceFactory, self.ctx, true ).setBillingInfo( { orderId: params.id }, { body: mzOrder.billingInfo } ).then( function( billingResult ){
                             // once the payment is captured and billinginfo updated, Submit the Order
                             OrderResourceFactory( self.ctx ).performOrderAction( { actionName: 'SubmitOrder', orderId: mzOrder.id } ).then( function( orderResult ){
-
                                 if( orderResult.Error ){
                                     // Submit order failed
+                                    console.error( "Order Submit error", orderResult.Error );
                                     helper.setAffirmError( self.ctx, orderResult.Error );
                                     self.ctx.response.redirect( '/cart' );
                                     return self.ctx.response.end();
@@ -141,7 +140,7 @@ module.exports = function(context, callback) {
                             },
                             function( error ){
                                 // Submit order failed
-                                console.error("2.1 Order Submit error", error);
+                                console.error("Order Submit error", error);
                                 helper.setAffirmError( self.ctx, error );
                                 self.ctx.response.redirect( '/cart' );
                                 return self.ctx.response.end();
@@ -150,7 +149,7 @@ module.exports = function(context, callback) {
                     },
                     function( error ){
                             // handle affirm response error
-                            self.ctx.cache.request.set("Error", error);
+                            console.error( 'Affirm response error', error );
                             helper.setAffirmError( self.ctx, error);
                             self.ctx.response.redirect( '/cart' );
                             return self.ctx.response.end();

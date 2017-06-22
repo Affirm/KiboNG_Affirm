@@ -165,6 +165,12 @@ var paymentHelper = module.exports = {
   		}
 	},
 	captureAmount: function (context, config, paymentAction, payment) {
+        // Capture amount should be equal to the collected amount
+        if( paymentAction.amount != payment.amountRequested ){
+            console.error( 'Amount to capture should be equal to the order total' );
+            return { status : paymentConstants.FAILED, responseText: 'Capture amount should be equal to the requestd order amount' };
+        }
+
         // get payment config
         return this.getPaymentConfig( context ).then( function( config ) {
             return helper.getOrderDetails( context, payment.orderId ).then( function( orderDetails ) {
@@ -189,8 +195,17 @@ var paymentHelper = module.exports = {
     },
     creditPayment: function (context, config, paymentAction, payment) {
         // get payment config
+
+        // Refund amount should be equal to the collected amount
+        if( paymentAction.amount != payment.amountCollected ){
+            console.error( 'Amount to refund should be equal to the ammount collected' );
+            return { status : paymentConstants.FAILED, responseText: 'Refund amount should be equal to the collected amount' };
+        }
+
+        // all goog, refund the payment
         return this.getPaymentConfig( context ).then( function( config ) {
             return helper.getOrderDetails( context, payment.orderId ).then( function( orderDetails ) {
+
                 // capture the payment
                 return affirmPay.refundPayment( { chargeId: payment.externalTransactionId, orderId: orderDetails.orderId }, config ).then( function( affirmResponse ){
                     return {

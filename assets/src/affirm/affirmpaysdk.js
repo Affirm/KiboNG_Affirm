@@ -71,7 +71,6 @@ module.exports = function() {
         var promise = new Promise( function(resolve, reject) {
             needle.post( config.apiUrl + 'charges/' + params.chargeId + '/refund', { order_id: params.orderId }, options,
 				function(err, response, body){
-                    console.log('3. refundPayment - affirmResponse', err, response, body );
 					if ( body &&  body.status_code && body.status_code != 200)
 						reject( body );
 					else {
