@@ -49,7 +49,16 @@ function AppInstall(context, callback) {
             .then(function(paymentSettings){
                 return updateThirdPartyPaymentWorkflow(paymentSettingsClient, paymentSettings);
             },function(err) {
-                return paymentSettingsClient.addThirdPartyPaymentWorkflow(paymentDef);
+                return addThirdPartyPaymentWorkflow(paymentSettingsClient, paymentDef);
+        });
+    }
+
+    function addThirdPartyPaymentWorkflow( paymentSettingsClient, paymentDef ) {
+        paymentSettingsClient.addThirdPartyPaymentWorkflow(paymentDef)
+        .then(function(result) {
+            return result;
+        },function(err) {
+            console.log("Affirm install error", err);
         });
     }
 
@@ -58,7 +67,7 @@ function AppInstall(context, callback) {
         paymentDef.isEnabled = existingSettings.isEnabled;
         return paymentSettingsClient.deleteThirdPartyPaymentWorkflow({ "fullyQualifiedName" : paymentDef.namespace+"~"+paymentDef.name})
         .then(function(result) {
-            return paymentSettingsClient.addThirdPartyPaymentWorkflow(paymentDef);
+            return addThirdPartyPaymentWorkflow(paymentSettingsClient, paymentDef);
         });
     }
 
@@ -108,14 +117,12 @@ function AppInstall(context, callback) {
 
 	}
 
-	function appUpdateCustomRoutes(customRoutesApi, customRoutes) {
-		 console.log(customRoutes);
-			console.log("route array size", _.size(customRoutes.routes));
-			//Add / Update custom routes for paypal
-			customRoutes = getRoutes(customRoutes, "affirm/processor","affirmProcessor");
-			return customRoutesApi.updateCustomRouteSettings(customRoutes);
-
-	}
+    function appUpdateCustomRoutes(customRoutesApi, customRoutes) {
+        //console.log("route array size", _.size(customRoutes.routes));
+        //Add / Update custom routes for paypal
+        customRoutes = getRoutes(customRoutes, 'affirm/processor', 'affirmProcessor' );
+        return customRoutesApi.updateCustomRouteSettings(customRoutes);
+    }
 
 	function getRoutes(customRoutes, template,action) {
 		 var route =  {

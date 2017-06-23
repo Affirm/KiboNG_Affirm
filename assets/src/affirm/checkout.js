@@ -97,6 +97,9 @@ module.exports = function(context, callback) {
 
             if( !( params.checkout_token && params.id ) ){
                 var err = 'Affirm Token not present';
+                if( params.affcancel && params.affcancel == '1' ){
+                    err = 'Affirm Payment has been cancelled';
+                }
                 console.error( err );
                 helper.setAffirmError( self.ctx, err );
                 self.ctx.response.redirect( '/cart' );
@@ -127,6 +130,7 @@ module.exports = function(context, callback) {
                             OrderResourceFactory( self.ctx ).performOrderAction( { actionName: 'SubmitOrder', orderId: mzOrder.id } ).then( function( orderResult ){
                                 if( orderResult.Error ){
                                     // Submit order failed
+                                    // TODO: void payment in affirm
                                     console.error( "Order Submit error", orderResult.Error );
                                     helper.setAffirmError( self.ctx, orderResult.Error );
                                     self.ctx.response.redirect( '/cart' );
@@ -140,6 +144,7 @@ module.exports = function(context, callback) {
                             },
                             function( error ){
                                 // Submit order failed
+                                // TODO: void payment in affirm
                                 console.error("Order Submit error", error);
                                 helper.setAffirmError( self.ctx, error );
                                 self.ctx.response.redirect( '/cart' );
