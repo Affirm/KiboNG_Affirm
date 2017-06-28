@@ -7,6 +7,7 @@ module.exports = {
 	CAPTUREONSHIPMENT: "AuthOnOrderPlacementAndCaptureOnOrderShipment",
 	ORDERPROCESSING: "orderProcessing",
     THRESHOLD: "threshold",
+    PROMO_ID: "promoId",
     SCRIPT_URL: "scriptUrl",
 	FAILED: "Failed",
 	NEW: "New",
@@ -16,4 +17,5 @@ module.exports = {
 	CAPTURED: "Captured",
 	CREDITED: "Credited",
 	CREDITPENDING: "CreditPending",
+    VOIDED: "Voided",
 };

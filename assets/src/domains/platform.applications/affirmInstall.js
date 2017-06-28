@@ -31,6 +31,7 @@ function AppInstall(context, callback) {
             Promise.all(tasks).then(function(result) {
                     console.log("Affirm payment definition installed");
                     addCustomRoutes(context, tenant);
+                    //enableActions(context, tenant);
                 }, function(error) {
                     self.cb(error);
             });
@@ -76,7 +77,6 @@ function AppInstall(context, callback) {
 		installer.enableActions(self.ctx, null, {
             "embedded.commerce.payments.action.performPaymentInteraction" : function(settings) {
               settings = settings || {};
-              settings.timeoutMilliseconds =settings.timeoutMilliseconds ||  30000;
               return settings;
             },"affirmProcessor" : function(settings) {
 				settings = settings || {};
@@ -154,6 +154,7 @@ function getPaymentDef(existingSettings) {
                         getPaymentActionFieldDef("Environment", paymentConstants.ENVIRONMENT, "RadioButton", false,getEnvironmentVocabularyValues(), existingSettings),
                         getPaymentActionFieldDef("Public API key", paymentConstants.PUBLIC_API_KEY, "TextBox", false,null,existingSettings),
                         getPaymentActionFieldDef("Private API key", paymentConstants.PRIVATE_API_KEY, "TextBox", false,null,existingSettings),
+                        getPaymentActionFieldDef("Affirm Promo ID", paymentConstants.PROMO_ID, "TextBox", false,getPromoIdVocabularyValues(),existingSettings),
                         getPaymentActionFieldDef("Affirm Amount Threshold", paymentConstants.THRESHOLD, "TextBox", false,null,existingSettings),
                         getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false,getOrderProcessingVocabularyValues(),existingSettings)
             ]
@@ -183,6 +184,12 @@ function getPaymentDef(existingSettings) {
     function getPrivateapikeyVocabularyValues() {
         return [
             getVocabularyContent(paymentConstants.PRIVATE_API_KEY, "en-US", "Private API key"),
+        ];
+    }
+
+    function getPromoIdVocabularyValues() {
+        return [
+            getVocabularyContent(paymentConstants.PROMO_ID, "en-US", "Affirm Promo ID"),
         ];
     }
 

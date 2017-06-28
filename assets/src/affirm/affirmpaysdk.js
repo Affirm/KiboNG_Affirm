@@ -82,6 +82,27 @@ module.exports = function() {
 		return promise;
 	};
 
+    // call affirm charges to void the payment
+    self.voidPayment = function( params, config ) {
+        var options = {
+                json: true,
+                headers: { 'Authorization':'Basic ' + new Buffer( config.publicapikey + ':' + config.privateapikey ).toString('base64')  }
+        };
+
+        var promise = new Promise( function(resolve, reject) {
+            needle.post( config.apiUrl + 'charges/' + params.chargeId + '/void', { order_id: params.orderId }, options,
+				function(err, response, body){
+					if ( body &&  body.status_code && body.status_code != 200)
+						reject( body );
+					else {
+						resolve( body );
+					}
+				}
+			);
+		});
+		return promise;
+	};
+
     self.configure = function(config) {
 		console.log('Not Implemented - Affirm dosnt Need config?');
 	};

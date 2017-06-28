@@ -1,6 +1,11 @@
 {
   "exports": [
     {
+      "id": "processOrderActionAfter",
+      "virtualPath": "./dist\\commerce.orders.manifest.all.js",
+      "actionId": "embedded.commerce.orders.action.after"
+    },
+    {
       "id": "embedded.commerce.payments.action.performPaymentInteraction",
       "virtualPath": "./dist\\commerce.payments.manifest.all.js",
       "actionId": "embedded.commerce.payments.action.performPaymentInteraction"

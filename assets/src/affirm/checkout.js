@@ -7,12 +7,13 @@ var constants = require("mozu-node-sdk/constants");
 var paymentConstants = require("./constants");
 var orderClient = require("mozu-node-sdk/clients/commerce/order")();
 var cartClient = require("mozu-node-sdk/clients/commerce/cart")();
-var FulfillmentInfoClient = require('mozu-node-sdk/clients/commerce/orders/fulfillmentInfo')();
 var helper = require("./helper");
 var OrderResourceFactory = require('mozu-node-sdk/clients/commerce/order');
 var OrderPayment = require('mozu-node-sdk/clients/commerce/orders/payment');
 var BillInfoResourceFactory = require('mozu-node-sdk/clients/commerce/orders/billinginfo');
 var paymentHelper = require("./paymentHelper");
+
+var FulfillmentResourceFactory = require('mozu-node-sdk/clients/commerce/orders/fulfillmentAction');
 
 // TODO: Should we add fulfillmentInfo?
 
@@ -35,12 +36,11 @@ module.exports = function(context, callback) {
             payment.externalTransactionId = payment.billingInfo.externalTransactionId;
         }
 
-        if ( self.ctx.configuration && self.ctx.configuration.payment )
+        if ( self.ctx.configuration && self.ctx.configuration.payment ){
+            console.log( 'Decline Capture???' );
             declineCapture =  self.ctx.configuration.payment.declineCapture === true;
-
+        }
         try {
-            console.log('Processing payment action', paymentAction.actionName);
-
             // get Payment config
             return paymentHelper.getPaymentConfig( self.ctx ).then( function( config ) {
 
@@ -53,7 +53,7 @@ module.exports = function(context, callback) {
                     case "VoidPayment":
                         console.log("Voiding payment interaction for ", payment.externalTransactionId);
                         //console.log("Void Payment", payment.id);
-                        return paymentHelper.voidPayment(self.ctx, config, paymentAction, payment);
+                        return paymentHelper.voidPayment( self.ctx, config, paymentAction, payment ) ;
                     case "AuthorizePayment":
                         console.log("Authorizing payment for ", payment.externalTransactionId);
                         return paymentHelper.confirmAndAuthorize(self.ctx, config, paymentAction, payment);
@@ -110,7 +110,7 @@ module.exports = function(context, callback) {
             // get order by orderId
             helper.createClientFromContext( OrderResourceFactory, self.ctx, true ).getOrder( { orderId: params.id } ).then( function( mzOrder ){
 
-                if( mzOrder.availableActions.indexOf( 'SubmitOrder' ) < 0 ){
+                if( mzOrder && mzOrder.availableActions.indexOf( 'SubmitOrder' ) < 0 ){
                     var err = 'There is a problem to submit the order';
                     console.error( err );
                     helper.setAffirmError( self.ctx, err );
@@ -119,7 +119,7 @@ module.exports = function(context, callback) {
                 }
 
                 //capture the payment
-                paymentHelper.getPaymentConfig( self.ctx ).then( function( config ) {
+                return paymentHelper.getPaymentConfig( self.ctx ).then( function( config ) {
                     // authorize Affirm Payment
                     affirmPay.authorizePayment( params, config ).then( function( affirmResponse ){
                         // set externalTransactionId to referer affirm Loan ID
@@ -128,18 +128,20 @@ module.exports = function(context, callback) {
                         helper.createClientFromContext( BillInfoResourceFactory, self.ctx, true ).setBillingInfo( { orderId: params.id }, { body: mzOrder.billingInfo } ).then( function( billingResult ){
                             // once the payment is captured and billinginfo updated, Submit the Order
                             OrderResourceFactory( self.ctx ).performOrderAction( { actionName: 'SubmitOrder', orderId: mzOrder.id } ).then( function( orderResult ){
+
                                 if( orderResult.Error ){
                                     // Submit order failed
                                     // TODO: void payment in affirm
-                                    console.error( "Order Submit error", orderResult.Error );
+                                    console.error( "Order Submit error Call", orderResult );
                                     helper.setAffirmError( self.ctx, orderResult.Error );
                                     self.ctx.response.redirect( '/cart' );
                                     return self.ctx.response.end();
                                 }
                                 else{
-                                    // all good go to confirmation page
+                                    console.log( "Order Submit Success" );
                                     self.ctx.response.redirect( '/checkout/' + mzOrder.id + '/confirmation');
-                                    return self.ctx.response.end();
+                                    self.ctx.response.end();
+                                    return self.cb();
                                 }
                             },
                             function( error ){
@@ -163,17 +165,42 @@ module.exports = function(context, callback) {
             }
         );
     } catch(e) {
-        console.error(e);
+        console.error( 'Affirm Error', e);
         helper.setAffirmError( self.ctx, e);
         self.ctx.response.redirect( '/cart' );
         return self.ctx.response.end();
     }
   };
 
-
-  self.setError = function(context, callback, error) {
-    console.log(err);
-    context.cache.request.set( "affirmError", err );
-    callback();
+  // Validate the order status change in KiboNG, and then take care of the Affirm Payment if needed
+  self.validateOrderStatusChanges = function() {
+      try{
+          var mzOrder = self.ctx.get.order();
+          if ( mzOrder.status == "Errored" ) {
+              var existingPayment = _.find( mzOrder.payments, function(payment) {
+                  return payment.paymentType === paymentConstants.PAYMENTSETTINGID  &&
+                  payment.paymentWorkflow === paymentConstants.PAYMENTSETTINGID;
+              });
+              if ( !existingPayment ) {
+                  return self.cb();
+              }
+              console.log( 'existingPayment', existingPayment );
+              var VoidPaymentParam =  {
+                  orderId: mzOrder.id,
+                  paymentId: existingPayment.id,
+                  actionName: 'VoidPayment'
+              };
+              console.log("VoidPaymentParam", VoidPaymentParam );
+              helper.createClientFromContext( OrderPayment, self.ctx ).performPaymentAction( VoidPaymentParam );
+              return self.cb();
+          }
+          else{
+              return self.cb();
+          }
+      } catch( error ) {
+          console.error( 'Affirm Order post process error', error);
+          return self.cb( error );
+      }
   };
+
 };
