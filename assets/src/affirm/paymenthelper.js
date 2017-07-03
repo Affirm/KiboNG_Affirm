@@ -148,12 +148,13 @@ var paymentHelper = module.exports = {
         console.log( 'confirmAndAuthorize', paymentAction, payment );
         var  self = this;
         try {
-            affirmPay.configure(config);
+            /*affirmPay.configure(config);
             var newPayment = this.createNewPayment(context, config, paymentAction, payment);
             if (newPayment.status == paymentConstants.FAILED) {
                 result.status = paymentConstants.DECLINED;
                 return result;
             }
+            */
             return this.authorizePayment(context, config.captureOnAuthorize, paymentAction, payment);
         } catch(e) {
             console.error(e);
@@ -161,7 +162,6 @@ var paymentHelper = module.exports = {
         }
     },
 	captureAmount: function (context, config, paymentAction, payment) {
-
         var capturedInteraction = this.getInteractionByStatus( payment.interactions, paymentConstants.CAPTURED );
         console.log( "Captured Payment - Captured interaction repeated", capturedInteraction );
         if ( capturedInteraction ) {
@@ -185,7 +185,7 @@ var paymentHelper = module.exports = {
                   affirmTransactionId: affirmResponse.transaction_id,
                   responseText: 'Captured Amount: ' + affirmResponse.currency + ' ' + affirmResponse.amount / 100,
                   responseCode: 200,
-                  amount: paymentAction.amount
+                  amount: affirmResponse.amount / 100
                 };
             }, function( error ){
                 console.log( 'Validate Affirm error', error );

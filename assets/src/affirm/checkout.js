@@ -1,17 +1,12 @@
-var url = require("url");
-var qs = require("querystring");
 var _ = require("underscore");
-var Guid = require('guid');
-var affirmPay = require("./affirmpaysdk")();
 var constants = require("mozu-node-sdk/constants");
+var affirmPay = require("./affirmpaysdk")();
 var paymentConstants = require("./constants");
-var orderClient = require("mozu-node-sdk/clients/commerce/order")();
-var cartClient = require("mozu-node-sdk/clients/commerce/cart")();
+var paymentHelper = require("./paymentHelper");
 var helper = require("./helper");
 var OrderResourceFactory = require('mozu-node-sdk/clients/commerce/order');
-var OrderPayment = require('mozu-node-sdk/clients/commerce/orders/payment');
+var OrderPaymentResourceFactory = require('mozu-node-sdk/clients/commerce/orders/payment');
 var BillInfoResourceFactory = require('mozu-node-sdk/clients/commerce/orders/billinginfo');
-var paymentHelper = require("./paymentHelper");
 
 var FulfillmentResourceFactory = require('mozu-node-sdk/clients/commerce/orders/fulfillmentAction');
 
@@ -71,7 +66,7 @@ module.exports = function(context, callback) {
                 }
             }).then( function( paymentResult ) {
                 console.log('Processing payment Result:', paymentResult);
-                paymentHelper.processPaymentResult( self.ctx, paymentResult, paymentAction );
+                paymentHelper.processPaymentResult( self.ctx, paymentResult, paymentAction, payment );
                 self.cb();
             }).catch( function( err ){
                 console.error(err);
@@ -191,7 +186,7 @@ module.exports = function(context, callback) {
                   actionName: 'VoidPayment'
               };
               console.log("VoidPaymentParam", VoidPaymentParam );
-              helper.createClientFromContext( OrderPayment, self.ctx ).performPaymentAction( VoidPaymentParam );
+              helper.createClientFromContext( OrderPaymentResourceFactory, self.ctx ).performPaymentAction( VoidPaymentParam );
               return self.cb();
           }
           else{
