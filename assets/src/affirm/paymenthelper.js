@@ -30,6 +30,7 @@ var paymentHelper = module.exports = {
                         "privateapikey" : helper.getValue(paymentSettings, paymentConstants.PRIVATE_API_KEY),
                         "threshold" : helper.getValue(paymentSettings, paymentConstants.THRESHOLD),
                         "promoId" : helper.getValue(paymentSettings, paymentConstants.PROMO_ID),
+                        "financingProgram" : helper.getValue(paymentSettings, paymentConstants.FINANCING_PROGRAM),
                         "scriptUrl" : ( environment === "sandbox" ) ? 'https://cdn1-sandbox.affirm.com/js/v2/affirm.js' : 'https://cdn1.affirm.com/js/v2/affirm.js',
                         "apiUrl" : ( environment === "sandbox" ) ? 'https://sandbox.affirm.com/api/v2/' : 'https://api.affirm.com/api/v2/',
                         "orderProcessing" : helper.getValue(paymentSettings, paymentConstants.ORDERPROCESSING),

@@ -151,12 +151,13 @@ function getPaymentDef(existingSettings) {
         "isEnabled": "false",
         "description" : "<div style='font-size:13px;font-style:italic'>Please review our <a style='color:blue;' target='mozupwahelp' href='https://docs.affirm.com/'>Help</a> documentation to configure Pay With Affirm</div>",
         "credentials":  [
-                        getPaymentActionFieldDef("Environment", paymentConstants.ENVIRONMENT, "RadioButton", false,getEnvironmentVocabularyValues(), existingSettings),
-                        getPaymentActionFieldDef("Public API key", paymentConstants.PUBLIC_API_KEY, "TextBox", false,null,existingSettings),
-                        getPaymentActionFieldDef("Private API key", paymentConstants.PRIVATE_API_KEY, "TextBox", false,null,existingSettings),
-                        getPaymentActionFieldDef("Affirm Promo ID", paymentConstants.PROMO_ID, "TextBox", false,getPromoIdVocabularyValues(),existingSettings),
-                        getPaymentActionFieldDef("Affirm Amount Threshold", paymentConstants.THRESHOLD, "TextBox", false,null,existingSettings),
-                        getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false,getOrderProcessingVocabularyValues(),existingSettings)
+                        getPaymentActionFieldDef("Environment", paymentConstants.ENVIRONMENT, "RadioButton", false, getEnvironmentVocabularyValues(), existingSettings),
+                        getPaymentActionFieldDef("Public API key", paymentConstants.PUBLIC_API_KEY, "TextBox", false, null, existingSettings),
+                        getPaymentActionFieldDef("Private API key", paymentConstants.PRIVATE_API_KEY, "TextBox", true, null, existingSettings),
+                        getPaymentActionFieldDef("Affirm Promo ID", paymentConstants.PROMO_ID, "TextBox", false, getPromoIdVocabularyValues(), existingSettings),
+                        getPaymentActionFieldDef("Affirm Financing Program", paymentConstants.FINANCING_PROGRAM, "TextBox", false, getFinancingProgramVocabularyValues(), existingSettings),
+                        getPaymentActionFieldDef("Affirm Amount Threshold", paymentConstants.THRESHOLD, "TextBox", false,null, existingSettings),
+                        getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false, getOrderProcessingVocabularyValues(), existingSettings)
             ]
         };
 }
@@ -190,6 +191,12 @@ function getPaymentDef(existingSettings) {
     function getPromoIdVocabularyValues() {
         return [
             getVocabularyContent(paymentConstants.PROMO_ID, "en-US", "Affirm Promo ID"),
+        ];
+    }
+
+    function getFinancingProgramVocabularyValues() {
+        return [
+            getVocabularyContent(paymentConstants.FINANCING_PROGRAM, "en-US", "Affirm Financing Program"),
         ];
     }
 
