@@ -135,8 +135,7 @@ module.exports = function(context, callback) {
                                 else{
                                     console.log( "Order Submit Success" );
                                     self.ctx.response.redirect( '/checkout/' + mzOrder.id + '/confirmation');
-                                    self.ctx.response.end();
-                                    return self.cb();
+                                    return self.ctx.response.end();
                                 }
                             },
                             function( error ){
