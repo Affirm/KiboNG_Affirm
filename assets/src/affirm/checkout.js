@@ -142,7 +142,7 @@ module.exports = function(context, callback) {
                                 // Submit order failed
                                 // TODO: void payment in affirm
                                 console.error("Order Submit error", error);
-                                helper.setAffirmError( self.ctx, error );
+                                helper.setAffirmError( self.ctx, 'There was a problem to submit the order' );
                                 self.ctx.response.redirect( '/cart' );
                                 return self.ctx.response.end();
                             });

@@ -53,12 +53,28 @@ var paymentHelper = module.exports = {
             return;
         }
 
+        if ( !config.privateapikey ) {
+            callback("Pay With Affirm - Private API KEY not found.");
+            return;
+        }
+
+        if ( !config.threshold ) {
+            callback("Pay With Affirm - Affirm Amount Threshold not found.");
+            return;
+        }
+        else{
+            if( !new RegExp(/^\d+$/).test( config.threshold ) ){
+                callback("Pay With Affirm - Affirm Amount Threshold is not a number. Current Value: " + config.threshold );
+                return;
+            }
+        }
+
         if ( !config.environment ){
             callback("Pay With Affirm - Environment fields are required.");
             return;
         }
 
-		//TODO: validate values
+		// all good
 		callback();
 	},
 	getInteractionByStatus: function ( interactions, status ) {
