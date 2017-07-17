@@ -91,9 +91,9 @@ module.exports = function(context, callback) {
             var params = affirmPay.getToken( self.ctx );
 
             if( !( params.checkout_token && params.id ) ){
-                var err = 'Affirm Token not present';
+                var err = 'We are unable to process your Affirm transaction at this time. Please try again later or use a different payment method.';//'Affirm Token not present';
                 if( params.affcancel && params.affcancel == '1' ){
-                    err = 'Affirm Payment has been cancelled';
+                    err = 'We are unable to process your Affirm transaction at this time. Please try again later or use a different payment method.';
                 }
                 console.error( err );
                 helper.setAffirmError( self.ctx, err );
@@ -106,7 +106,7 @@ module.exports = function(context, callback) {
             helper.createClientFromContext( OrderResourceFactory, self.ctx, true ).getOrder( { orderId: params.id } ).then( function( mzOrder ){
 
                 if( mzOrder && mzOrder.availableActions.indexOf( 'SubmitOrder' ) < 0 ){
-                    var err = 'There is a problem to submit the order';
+                    var err = 'We are unable to process your order at this time. Please try again later.';
                     console.error( err );
                     helper.setAffirmError( self.ctx, err );
                     self.ctx.response.redirect( '/cart' );
@@ -128,7 +128,8 @@ module.exports = function(context, callback) {
                                     // Submit order failed
                                     // TODO: void payment in affirm
                                     console.error( "Order Submit error Call", orderResult );
-                                    helper.setAffirmError( self.ctx, orderResult.Error );
+                                    var err = 'We are unable to process your order at this time. Please try again later.';
+                                    helper.setAffirmError( self.ctx, err );
                                     self.ctx.response.redirect( '/cart' );
                                     return self.ctx.response.end();
                                 }
@@ -142,7 +143,8 @@ module.exports = function(context, callback) {
                                 // Submit order failed
                                 // TODO: void payment in affirm
                                 console.error("Order Submit error", error);
-                                helper.setAffirmError( self.ctx, 'There was a problem to submit the order' );
+                                var err = 'We are unable to process your order at this time. Please try again later.';
+                                helper.setAffirmError( self.ctx, err );
                                 self.ctx.response.redirect( '/cart' );
                                 return self.ctx.response.end();
                             });
@@ -158,9 +160,9 @@ module.exports = function(context, callback) {
                 });
             }
         );
-    } catch(e) {
-        console.error( 'Affirm Error', e);
-        helper.setAffirmError( self.ctx, e);
+    } catch( e ) {
+        console.error( 'Affirm Error', e );
+        helper.setAffirmError( self.ctx, 'We are unable to process your order at this time. Please try again later.' );
         self.ctx.response.redirect( '/cart' );
         return self.ctx.response.end();
     }
