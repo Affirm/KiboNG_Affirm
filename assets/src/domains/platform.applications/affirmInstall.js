@@ -152,12 +152,16 @@ function getPaymentDef(existingSettings) {
         "description" : "<div style='font-size:13px;font-style:italic'>Please review our <a style='color:blue;' target='mozupwahelp' href='https://docs.affirm.com/'>Help</a> documentation to configure Pay With Affirm</div>",
         "credentials":  [
                         getPaymentActionFieldDef("Environment", paymentConstants.ENVIRONMENT, "RadioButton", false, getEnvironmentVocabularyValues(), existingSettings),
+                        getPaymentActionFieldDef("Affirm Custom Enable Status", paymentConstants.CUSTOM_AFFIRM_ENABLE, "RadioButton", false, getAffirmEnableValues(), existingSettings),
                         getPaymentActionFieldDef("Public API key", paymentConstants.PUBLIC_API_KEY, "TextBox", false, null, existingSettings),
                         getPaymentActionFieldDef("Private API key", paymentConstants.PRIVATE_API_KEY, "TextBox", true, null, existingSettings),
                         getPaymentActionFieldDef("Affirm Promo ID", paymentConstants.PROMO_ID, "TextBox", false, getPromoIdVocabularyValues(), existingSettings),
                         getPaymentActionFieldDef("Affirm Financing Program", paymentConstants.FINANCING_PROGRAM, "TextBox", false, getFinancingProgramVocabularyValues(), existingSettings),
                         getPaymentActionFieldDef("Affirm Amount Threshold", paymentConstants.THRESHOLD, "TextBox", false,null, existingSettings),
-                        getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false, getOrderProcessingVocabularyValues(), existingSettings)
+                        getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false, getOrderProcessingVocabularyValues(), existingSettings),
+                        getPaymentActionFieldDef("Message: Checkout - Affirm Selected", paymentConstants.MESSAGE_CHECKOUT_SELECTED, "TextBox", false, null, existingSettings),
+                        getPaymentActionFieldDef("Message: Checkout - Affirm Disabled", paymentConstants.MESSAGE_CHECKOUT_DISABLED, "TextBox", false, null, existingSettings),
+                        getPaymentActionFieldDef("Message: Checkout - Review Step", paymentConstants.MESSAGE_REVIEW_SELECTED, "TextBox", false, null, existingSettings)
             ]
         };
 }
@@ -175,6 +179,14 @@ function getPaymentDef(existingSettings) {
 			getVocabularyContent(paymentConstants.CAPTUREONSHIPMENT, "en-US", "Authorize on Order Placement and Capture on Order Shipment")
 		];
 	}
+
+    function getAffirmEnableValues() {
+        return [
+            getVocabularyContent(paymentConstants.YES, "en-US", "Yes"),
+            getVocabularyContent(paymentConstants.TESTING, "en-US", "Testing"),
+            getVocabularyContent(paymentConstants.NO, "en-US", "No"),
+        ];
+    }
 
     function getPublicapikeyVocabularyValues() {
         return [
