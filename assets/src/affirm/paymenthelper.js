@@ -218,14 +218,15 @@ var paymentHelper = module.exports = {
     },
     creditPayment: function (context, config, paymentAction, payment) {
         // Refund amount should be equal to the collected amount
-        if( paymentAction.amount != payment.amountCollected ){
-            console.error( 'Amount to refund should be equal to the ammount collected' );
-            return { status : paymentConstants.FAILED, responseText: 'Refund amount should be equal to the collected amount' };
+        if( paymentAction.amount && ( paymentAction.amount > payment.amountCollected ) ){
+            var validMessage = 'Amount to refund can not be grather than the amount collected';
+            console.error( validMessage );
+            return { status : paymentConstants.FAILED, responseText: validMessage };
         }
 
         // all goog, refund the payment
         // capture the payment
-        return affirmPay.refundPayment( { chargeId: payment.externalTransactionId, orderId: payment.orderId }, config ).then( function( affirmResponse ){
+        return affirmPay.refundPayment( { chargeId: payment.externalTransactionId, orderId: payment.orderId, amount: paymentAction.amount }, config ).then( function( affirmResponse ){
             return {
                   status : paymentConstants.CREDITED,
                   affirmTransactionId: affirmResponse.transaction_id,

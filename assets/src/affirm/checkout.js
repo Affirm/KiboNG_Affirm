@@ -180,13 +180,14 @@ module.exports = function(context, callback) {
               if ( !existingPayment ) {
                   return self.cb();
               }
-              console.log( 'existingPayment', existingPayment );
+
               var VoidPaymentParam =  {
                   orderId: mzOrder.id,
                   paymentId: existingPayment.id,
                   actionName: 'VoidPayment'
               };
-              console.log("VoidPaymentParam", VoidPaymentParam );
+
+              console.log( 'Void Affirm Payment', VoidPaymentParam );
               helper.createClientFromContext( OrderPaymentResourceFactory, self.ctx ).performPaymentAction( VoidPaymentParam );
               return self.cb();
           }

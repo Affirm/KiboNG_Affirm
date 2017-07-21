@@ -77,6 +77,7 @@ function AppInstall(context, callback) {
 		installer.enableActions(self.ctx, null, {
             "embedded.commerce.payments.action.performPaymentInteraction" : function(settings) {
               settings = settings || {};
+              settings.timeoutMilliseconds = settings.timeoutMilliseconds || 30000;
               return settings;
             },"affirmProcessor" : function(settings) {
 				settings = settings || {};

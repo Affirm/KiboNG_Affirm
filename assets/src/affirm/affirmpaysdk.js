@@ -69,10 +69,12 @@ module.exports = function() {
             headers: { 'Authorization':'Basic ' + new Buffer( config.publicapikey + ':' + config.privateapikey ).toString('base64')  }
         };
 
+        var refundParams = ( params.amount ) ? { order_id: params.orderId, amount: params.amount * 100 } : { order_id: params.orderId };
+        console.log( 'refundParams', refundParams );
         var promise = new Promise( function(resolve, reject) {
-            needle.post( config.apiUrl + 'charges/' + params.chargeId + '/refund', { order_id: params.orderId }, options,
-                function(err, response, body){
-                    if ( response &&  response.statusCode && response.statusCode != 200){
+            needle.post( config.apiUrl + 'charges/' + params.chargeId + '/refund', refundParams, options,
+                function( err, response, body ){
+                    if ( response &&  response.statusCode && response.statusCode != 200 ){
                         reject( { status_code: response.statusCode, message: ( response.statusMessage ) ? response.statusMessage : 'Affirm Error found' } );
                     }
 
