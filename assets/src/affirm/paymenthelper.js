@@ -32,6 +32,8 @@ var paymentHelper = module.exports = {
                         "threshold" : helper.getValue(paymentSettings, paymentConstants.THRESHOLD),
                         "promoId" : helper.getValue(paymentSettings, paymentConstants.PROMO_ID),
                         "financingProgram" : helper.getValue(paymentSettings, paymentConstants.FINANCING_PROGRAM),
+                        "partialCaptureAllowed" : ( helper.getValue(paymentSettings, paymentConstants.PARTIAL_CAPTURE) == paymentConstants.PARTIAL_CAPTURE_YES ),
+                        "partialRefundAllowed" : ( helper.getValue(paymentSettings, paymentConstants.PARTIAL_REFUND) == paymentConstants.PARTIAL_REFUND_YES ),
                         "messageCheckoutSelected" : helper.getValue(paymentSettings, paymentConstants.MESSAGE_CHECKOUT_SELECTED),
                         "messageCheckoutDisabled" : helper.getValue(paymentSettings, paymentConstants.MESSAGE_CHECKOUT_DISABLED),
                         "messageReviewSelected" : helper.getValue(paymentSettings, paymentConstants.MESSAGE_REVIEW_SELECTED),
@@ -120,36 +122,36 @@ var paymentHelper = module.exports = {
 	          }
 
 	    if (paymentResult.status == paymentConstants.NEW){
-	           context.exec.setPaymentAmountRequested(paymentAction.amount);
+            context.exec.setPaymentAmountRequested(paymentAction.amount);
         }
 	    var interaction  =  {status: paymentResult.status, interactionType: interactionType};
 	    if (paymentResult.amount)
-	      interaction.amount = paymentResult.amount;
+	       interaction.amount = paymentResult.amount;
 
 	    if (paymentResult.affirmTransactionId)
-	      interaction.gatewayTransactionId = paymentResult.affirmTransactionId;
+	       interaction.gatewayTransactionId = paymentResult.affirmTransactionId;
 
 	    if (paymentResult.responseText)
-	      interaction.gatewayResponseText= paymentResult.responseText;
+	       interaction.gatewayResponseText= paymentResult.responseText;
 
 	    if (paymentResult.responseCode)
-	      interaction.gatewayResponseCode= paymentResult.responseCode;
+            interaction.gatewayResponseCode= paymentResult.responseCode;
 
 	    interaction.isManual = isManual;
 
 	    context.exec.addPaymentInteraction(interaction);
-	    if (paymentResult.captureOnAuthorize) {
+	    if ( paymentResult.captureOnAuthorize ) {
             interaction.gatewayTransactionId = paymentResult.captureId;
             interaction.status = paymentConstants.CAPTURED;
             context.exec.addPaymentInteraction(interaction);
 	    }
 
-	    if (paymentResult.status == paymentConstants.CREDITPENDING){
-            context.exec.setPaymentAmountCredited(paymentResult.amount);
-      }
-        if (paymentResult.status == paymentConstants.CAPTURED){
+	    if ( paymentResult.status == paymentConstants.CREDITPENDING ){
+            context.exec.setPaymentAmountCredited( paymentResult.amount );
+        }
+        if ( paymentResult.status == paymentConstants.CAPTURED ){
             context.exec.setPaymentAmountCollected(paymentResult.amount);
-      }
+        }
 	},
     createNewPayment : function(context,config, paymentAction, payment) {
         return { status : paymentConstants.NEW, amount: paymentAction.amount};
@@ -182,9 +184,8 @@ var paymentHelper = module.exports = {
             return {status : paymentConstants.DECLINED, responseText: e};
         }
     },
-	captureAmount: function (context, config, paymentAction, payment) {
+	captureAmount: function ( context, config, paymentAction, payment ) {
         var capturedInteraction = this.getInteractionByStatus( payment.interactions, paymentConstants.CAPTURED );
-        console.log( "Captured Payment - Captured interaction repeated", capturedInteraction );
         if ( capturedInteraction ) {
             return {
               status : paymentConstants.FAILED,
@@ -194,9 +195,10 @@ var paymentHelper = module.exports = {
         }
 
         // Capture amount should be equal to the collected amount
-        if( paymentAction.amount != payment.amountRequested ){
-            console.error( 'Amount to capture should be equal to the order total' );
-            return { status : paymentConstants.FAILED, responseText: 'Capture amount should be equal to the requestd order amount' };
+        if( !config.partialCaptureAllowed && paymentAction.amount != payment.amountRequested ){
+            var validMessage = 'Amount to capture should be equal to the amount requested';
+            console.error( validMessage );
+            return { status : paymentConstants.FAILED, responseText: validMessage };
         }
 
         // capture the payment
@@ -217,14 +219,15 @@ var paymentHelper = module.exports = {
         });
     },
     creditPayment: function (context, config, paymentAction, payment) {
+        console.log( 'RefundAmount', payment.amountCredited );
         // Refund amount should be equal to the collected amount
-        if( paymentAction.amount && ( paymentAction.amount > payment.amountCollected ) ){
-            var validMessage = 'Amount to refund can not be grather than the amount collected';
+        if( !config.partialRefundAllowed && ( paymentAction.amount && ( paymentAction.amount != payment.amountCollected ) ) ){
+            var validMessage = 'Amount to refund can not be different than the amount collected';
             console.error( validMessage );
             return { status : paymentConstants.FAILED, responseText: validMessage };
         }
 
-        // all goog, refund the payment
+        // all good, refund the payment
         // capture the payment
         return affirmPay.refundPayment( { chargeId: payment.externalTransactionId, orderId: payment.orderId, amount: paymentAction.amount }, config ).then( function( affirmResponse ){
             return {
@@ -243,12 +246,8 @@ var paymentHelper = module.exports = {
         });
     },
     voidPayment : function (context, config, paymentAction, payment) {
-        console.log( 'Voiding Payment', config );
-        console.log( 'Voiding Payment', paymentAction );
-        console.log( 'Voiding Payment', payment );
-
         var capturedInteraction = this.getInteractionByStatus( payment.interactions, paymentConstants.CAPTURED );
-        console.log( "Void Payment - Captured interaction", capturedInteraction );
+
         if ( capturedInteraction ) {
             return {
               status : paymentConstants.FAILED,
@@ -262,7 +261,7 @@ var paymentHelper = module.exports = {
             return { status: paymentConstants.VOIDED };
         }
 
-        // all goog, void the payment
+        // all good, void the payment
         // void the payment
         return affirmPay.voidPayment( { chargeId: payment.externalTransactionId, orderId: payment.orderId }, config ).then( function( affirmResponse ){
             return {

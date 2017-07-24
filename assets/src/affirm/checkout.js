@@ -32,7 +32,7 @@ module.exports = function(context, callback) {
         }
 
         if ( self.ctx.configuration && self.ctx.configuration.payment ){
-            console.log( 'Decline Capture???' );
+            console.log( 'Decline Capture?' );
             declineCapture =  self.ctx.configuration.payment.declineCapture === true;
         }
         try {

@@ -160,6 +160,8 @@ function getPaymentDef(existingSettings) {
                         getPaymentActionFieldDef("Affirm Financing Program", paymentConstants.FINANCING_PROGRAM, "TextBox", false, getFinancingProgramVocabularyValues(), existingSettings),
                         getPaymentActionFieldDef("Affirm Amount Threshold", paymentConstants.THRESHOLD, "TextBox", false,null, existingSettings),
                         getPaymentActionFieldDef("Order Processing", paymentConstants.ORDERPROCESSING, "RadioButton", false, getOrderProcessingVocabularyValues(), existingSettings),
+                        getPaymentActionFieldDef("Allow capture amount to be less than authorization amount", paymentConstants.PARTIAL_CAPTURE, "RadioButton", false, getPartialCaptureAllowedValues(), existingSettings),
+                        getPaymentActionFieldDef("Allow return amount to be less than capture amount", paymentConstants.PARTIAL_REFUND, "RadioButton", false, getPartialRefundAllowedValues(), existingSettings),
                         getPaymentActionFieldDef("Message: Checkout - Affirm Selected", paymentConstants.MESSAGE_CHECKOUT_SELECTED, "TextBox", false, null, existingSettings),
                         getPaymentActionFieldDef("Message: Checkout - Affirm Disabled", paymentConstants.MESSAGE_CHECKOUT_DISABLED, "TextBox", false, null, existingSettings),
                         getPaymentActionFieldDef("Message: Checkout - Review Step", paymentConstants.MESSAGE_REVIEW_SELECTED, "TextBox", false, null, existingSettings)
@@ -186,6 +188,19 @@ function getPaymentDef(existingSettings) {
             getVocabularyContent(paymentConstants.YES, "en-US", "Yes"),
             getVocabularyContent(paymentConstants.TESTING, "en-US", "Testing"),
             getVocabularyContent(paymentConstants.NO, "en-US", "No"),
+        ];
+    }
+    function getPartialCaptureAllowedValues(){
+        return [
+            getVocabularyContent( paymentConstants.PARTIAL_CAPTURE_YES, "en-US", paymentConstants.YES),
+            getVocabularyContent( paymentConstants.PARTIAL_CAPTURE_NO, "en-US", paymentConstants.NO),
+        ];
+    }
+
+    function getPartialRefundAllowedValues(){
+        return [
+            getVocabularyContent( paymentConstants.PARTIAL_REFUND_YES, "en-US", paymentConstants.YES),
+            getVocabularyContent( paymentConstants.PARTIAL_REFUND_NO, "en-US", paymentConstants.NO),
         ];
     }
 
