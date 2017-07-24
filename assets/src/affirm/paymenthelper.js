@@ -43,7 +43,13 @@ var paymentHelper = module.exports = {
                         "captureOnAuthorize": captureOnAuthorize,
                         "isEnabled": paymentSettings.isEnabled
             };
-
+            // set default values to partial payment config
+            if( helper.getValue( paymentSettings, paymentConstants.PARTIAL_CAPTURE) === undefined ){
+                config.partialCaptureAllowed = false;
+            }
+            if( helper.getValue( paymentSettings, paymentConstants.PARTIAL_REFUND) === undefined ){
+                config.partialRefundAllowed = true;
+            }
     	return config;
 	},
     validatePaymentSettings: function(context, callback) {
