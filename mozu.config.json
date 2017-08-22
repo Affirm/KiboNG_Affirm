@@ -1,8 +1,8 @@
 {
   "baseUrl": "https://home.mozu.com",
-  "developerAccountId": 6549,
+  "developerAccountId": 0,
   "developerAccount": {
-    "emailAddress": "eduardo@deplabs.com"
+    "emailAddress": ""
   },
-  "workingApplicationKey": "DEPLAB.affirmdev1.1.0.0.Release"
+  "workingApplicationKey": ""
 }
