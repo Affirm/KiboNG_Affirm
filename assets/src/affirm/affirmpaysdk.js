@@ -10,6 +10,10 @@ module.exports = function() {
         var params = [];
         if( context.request && context.request.url ){
             params = helper.parseUrlParams( context );
+
+            if( context.request.body && context.request.body.checkout_token ){
+                params.checkout_token = context.request.body.checkout_token;
+            }
         }
         return params;
     };

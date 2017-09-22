@@ -47,7 +47,6 @@ module.exports = function(context, callback) {
                         return paymentHelper.createNewPayment(self.ctx, config, paymentAction, payment);
                     case "VoidPayment":
                         console.log("Voiding payment interaction for ", payment.externalTransactionId);
-                        //console.log("Void Payment", payment.id);
                         return paymentHelper.voidPayment( self.ctx, config, paymentAction, payment ) ;
                     case "AuthorizePayment":
                         console.log("Authorizing payment for ", payment.externalTransactionId);
@@ -89,7 +88,6 @@ module.exports = function(context, callback) {
         try{
             // parse response to get the token
             var params = affirmPay.getToken( self.ctx );
-
             if( !( params.checkout_token && params.id ) ){
                 var err = 'We are unable to process your Affirm transaction at this time. Please try again later or use a different payment method.';//'Affirm Token not present';
                 if( params.affcancel && params.affcancel == '1' ){

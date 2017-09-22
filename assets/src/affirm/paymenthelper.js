@@ -31,8 +31,6 @@ var paymentHelper = module.exports = {
                         "privateapikey" : helper.getValue(paymentSettings, paymentConstants.PRIVATE_API_KEY),
                         "threshold" : helper.getValue(paymentSettings, paymentConstants.THRESHOLD),
                         "promoId" : helper.getValue(paymentSettings, paymentConstants.PROMO_ID),
-                        "financingProgram" : helper.getValue(paymentSettings, paymentConstants.FINANCING_PROGRAM),
-                        "partialCaptureAllowed" : ( helper.getValue(paymentSettings, paymentConstants.PARTIAL_CAPTURE) == paymentConstants.PARTIAL_CAPTURE_YES ),
                         "partialRefundAllowed" : ( helper.getValue(paymentSettings, paymentConstants.PARTIAL_REFUND) == paymentConstants.PARTIAL_REFUND_YES ),
                         "messageCheckoutSelected" : helper.getValue(paymentSettings, paymentConstants.MESSAGE_CHECKOUT_SELECTED),
                         "messageCheckoutDisabled" : helper.getValue(paymentSettings, paymentConstants.MESSAGE_CHECKOUT_DISABLED),
@@ -43,10 +41,7 @@ var paymentHelper = module.exports = {
                         "captureOnAuthorize": captureOnAuthorize,
                         "isEnabled": paymentSettings.isEnabled
             };
-            // set default values to partial payment config
-            if( helper.getValue( paymentSettings, paymentConstants.PARTIAL_CAPTURE) === undefined ){
-                config.partialCaptureAllowed = false;
-            }
+            // set default values to partial refund
             if( helper.getValue( paymentSettings, paymentConstants.PARTIAL_REFUND) === undefined ){
                 config.partialRefundAllowed = true;
             }
@@ -70,11 +65,7 @@ var paymentHelper = module.exports = {
             return;
         }
 
-        if ( !config.threshold ) {
-            callback("Pay With Affirm - Affirm Amount Threshold not found.");
-            return;
-        }
-        else{
+        if ( config.threshold ) {
             if( !new RegExp(/^\d+$/).test( config.threshold ) ){
                 callback("Pay With Affirm - Affirm Amount Threshold is not a number. Current Value: " + config.threshold );
                 return;
@@ -177,13 +168,6 @@ var paymentHelper = module.exports = {
         console.log( 'confirmAndAuthorize', paymentAction, payment );
         var  self = this;
         try {
-            /*affirmPay.configure(config);
-            var newPayment = this.createNewPayment(context, config, paymentAction, payment);
-            if (newPayment.status == paymentConstants.FAILED) {
-                result.status = paymentConstants.DECLINED;
-                return result;
-            }
-            */
             return this.authorizePayment(context, config.captureOnAuthorize, paymentAction, payment);
         } catch(e) {
             console.error(e);
@@ -201,7 +185,7 @@ var paymentHelper = module.exports = {
         }
 
         // Capture amount should be equal to the collected amount
-        if( !config.partialCaptureAllowed && paymentAction.amount != payment.amountRequested ){
+        if( paymentAction.amount != payment.amountRequested ){
             var validMessage = 'Amount to capture should be equal to the amount requested';
             console.error( validMessage );
             return { status : paymentConstants.FAILED, responseText: validMessage };
