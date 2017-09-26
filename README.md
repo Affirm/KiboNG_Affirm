@@ -29,7 +29,7 @@ In order to work with Arc.js, you'll need to have:
 
 1. First, clone this repository to a folder on your development machine:
    ```sh
-   $ git clone https://github.com/DEPlabs/PayWithAffirm.git
+   $ git clone https://github.com/Affirm/KiboNG_Affirm.git
 
    Cloning into './PayWithAffirm'...
    done.
@@ -87,4 +87,4 @@ You should see a new option for **PayWithAffirm**. Enable the checkbox to view t
 After installing and configuring the Affirm Payments app you are able to accept Affirm payments in your Kibo eCommerce. The next step is to see Affirm running into your storefront.
 Affirm theme should be merged with your current KiboNG theme to support Affirm into your storefront. It enables the payment promotional messages into your Product and Cart pages and also add the Affirm option into the Checkout payment step
 
-Go to the [PayWithAffirm-Theme](https://github.com/DEPlabs/PayWithAffirm-Theme) repository and follow the instructions in the readme to merge Affirm functionality with your current KiboNG theme.
+Go to the [PayWithAffirm-Theme](https://github.com/Affirm/KiboNG_theme_Affirm) repository and follow the instructions in the readme to merge Affirm functionality with your current KiboNG theme.
